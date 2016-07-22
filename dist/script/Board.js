@@ -54,13 +54,13 @@
 	/// <reference path="../../typings/index.d.ts" />
 	"use strict";
 	var Board = (function () {
-	    function Board(colCount, rowCount, blockWidth) {
+	    function Board(blockWidth, colCount, rowCount) {
+	        if (blockWidth === void 0) { blockWidth = 30; }
 	        if (colCount === void 0) { colCount = 10; }
 	        if (rowCount === void 0) { rowCount = 20; }
-	        if (blockWidth === void 0) { blockWidth = 30; }
+	        this.blockWidth = blockWidth;
 	        this.colCount = colCount;
 	        this.rowCount = rowCount;
-	        this.blockWidth = blockWidth;
 	        this.shape = new createjs.Shape();
 	        this.shape.graphics
 	            .beginFill('rgba(0, 0, 0, 0.5)')

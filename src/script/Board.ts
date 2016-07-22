@@ -2,7 +2,7 @@
 
 export default class Board {
   shape: createjs.Shape;
-  constructor(public colCount: number = 10, public rowCount: number = 20, public blockWidth: number = 30) {
+  constructor(public blockWidth: number = 30, public colCount: number = 10, public rowCount: number = 20) {
     this.shape = new createjs.Shape();
     this.shape.graphics
       .beginFill('rgba(0, 0, 0, 0.5)')
