@@ -1,7 +1,7 @@
 /// <reference path="../../typings/index.d.ts" />
 
-import stage from './stage';
-import Board from './Board';
+import stage from './components/stage';
+import Board from './components/Board';
 
 let board = new Board();
 stage.addChild(board.shape);

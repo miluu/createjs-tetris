@@ -44,14 +44,40 @@
 /* 0 */
 /***/ function(module, exports, __webpack_require__) {
 
-	module.exports = __webpack_require__(2);
+	module.exports = __webpack_require__(1);
 
 
 /***/ },
 /* 1 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/// <reference path="../../typings/index.d.ts" />
+	"use strict";
+	var stage_1 = __webpack_require__(2);
+	var Board_1 = __webpack_require__(3);
+	var board = new Board_1.default();
+	stage_1.default.addChild(board.shape);
+	board.x = 10;
+	board.y = 10;
+	stage_1.default.update();
+
+
+/***/ },
+/* 2 */
+/***/ function(module, exports) {
+
+	/// <reference path="../../../typings/index.d.ts" />
+	"use strict";
+	var stage = new createjs.Stage('canvas');
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = stage;
+
+
+/***/ },
+/* 3 */
+/***/ function(module, exports) {
+
+	/// <reference path="../../../typings/index.d.ts" />
 	"use strict";
 	var Board = (function () {
 	    function Board(blockWidth, colCount, rowCount) {
@@ -96,32 +122,6 @@
 	}());
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Board;
-
-
-/***/ },
-/* 2 */
-/***/ function(module, exports, __webpack_require__) {
-
-	/// <reference path="../../typings/index.d.ts" />
-	"use strict";
-	var stage_1 = __webpack_require__(3);
-	var Board_1 = __webpack_require__(1);
-	var board = new Board_1.default();
-	stage_1.default.addChild(board.shape);
-	board.x = 10;
-	board.y = 10;
-	stage_1.default.update();
-
-
-/***/ },
-/* 3 */
-/***/ function(module, exports) {
-
-	/// <reference path="../../typings/index.d.ts" />
-	"use strict";
-	var stage = new createjs.Stage('canvas');
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = stage;
 
 
 /***/ }
