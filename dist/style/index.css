@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+  padding: 0;
+  background: #fff;
+}
+#canvas {
+  display: block;
+  background: #ddd;
+  margin: 20px auto;
+}
+
+/*# sourceMappingURL=index.css.map */
