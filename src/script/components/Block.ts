@@ -12,7 +12,8 @@ export default class Block extends createjs.Container {
   private _blockRotation: number;
   private _blockType: string;
   private _cells: Cell[];
-  constructor(public cellWidth: number = 30, blockType?: string, blockRotation: number = 0 ) {
+
+  constructor(private _cellWidth: number = 30, blockType?: string, blockRotation: number = 0 ) {
     super();
     if (!_.includes(this._allTypes(), blockType)) {
       this.blockType = this._randomType();
@@ -25,7 +26,7 @@ export default class Block extends createjs.Container {
   private _buildCells(): void {
     const cells: Cell[] = [];
     _.times(4, () => {
-      const cell = new Cell(this.cellWidth);
+      const cell = new Cell(this._cellWidth);
       cells.push(cell);
       this.addChild(cell);
     });
@@ -57,8 +58,8 @@ export default class Block extends createjs.Container {
     const shapeBlockRotationCount = shape.length;
     const rotationShape = shape[this._blockRotation % shapeBlockRotationCount];
     _.forEach(rotationShape, (cellPos, i) => {
-      this._cells[i].x = this.cellWidth * cellPos.x;
-      this._cells[i].y = this.cellWidth * cellPos.y;
+      this._cells[i].x = this._cellWidth * cellPos.x;
+      this._cells[i].y = this._cellWidth * cellPos.y;
     });
   }
 

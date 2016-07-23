@@ -139,11 +139,11 @@
 	var _ = __webpack_require__(6);
 	var Block = (function (_super) {
 	    __extends(Block, _super);
-	    function Block(cellWidth, blockType, blockRotation) {
-	        if (cellWidth === void 0) { cellWidth = 30; }
+	    function Block(_cellWidth, blockType, blockRotation) {
+	        if (_cellWidth === void 0) { _cellWidth = 30; }
 	        if (blockRotation === void 0) { blockRotation = 0; }
 	        _super.call(this);
-	        this.cellWidth = cellWidth;
+	        this._cellWidth = _cellWidth;
 	        if (!_.includes(this._allTypes(), blockType)) {
 	            this.blockType = this._randomType();
 	        }
@@ -156,7 +156,7 @@
 	        var _this = this;
 	        var cells = [];
 	        _.times(4, function () {
-	            var cell = new cell_1.default(_this.cellWidth);
+	            var cell = new cell_1.default(_this._cellWidth);
 	            cells.push(cell);
 	            _this.addChild(cell);
 	        });
@@ -195,8 +195,8 @@
 	        var shapeBlockRotationCount = shape.length;
 	        var rotationShape = shape[this._blockRotation % shapeBlockRotationCount];
 	        _.forEach(rotationShape, function (cellPos, i) {
-	            _this._cells[i].x = _this.cellWidth * cellPos.x;
-	            _this._cells[i].y = _this.cellWidth * cellPos.y;
+	            _this._cells[i].x = _this._cellWidth * cellPos.x;
+	            _this._cells[i].y = _this._cellWidth * cellPos.y;
 	        });
 	    };
 	    Block.prototype._randomType = function () {
