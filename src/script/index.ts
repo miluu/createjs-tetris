@@ -17,8 +17,8 @@ board.y = config.BOARD_POSITION_Y;
 stage.addChild(board);
 
 const block = new Block(config.CELL_WIDTH, Block.Type.T);
-block.x = config.BOARD_POSITION_X + config.CELL_WIDTH * 3;
-block.y = config.BOARD_POSITION_Y + config.CELL_WIDTH * 3;
+block.x = config.BOARD_POSITION_X;
+block.y = config.BOARD_POSITION_Y;
 stage.addChild(block);
 
 stage.update();
