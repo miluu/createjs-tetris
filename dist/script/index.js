@@ -56,9 +56,8 @@
 	var stage_1 = __webpack_require__(2);
 	var Board_1 = __webpack_require__(3);
 	var board = new Board_1.default();
-	stage_1.default.addChild(board.shape);
-	board.x = 10;
-	board.y = 10;
+	board.x = board.y = 20;
+	stage_1.default.addChild(board);
 	stage_1.default.update();
 
 
@@ -79,47 +78,36 @@
 
 	/// <reference path="../../../typings/index.d.ts" />
 	"use strict";
-	var Board = (function () {
-	    function Board(blockWidth, colCount, rowCount) {
-	        if (blockWidth === void 0) { blockWidth = 30; }
-	        if (colCount === void 0) { colCount = 10; }
-	        if (rowCount === void 0) { rowCount = 20; }
-	        this.blockWidth = blockWidth;
-	        this.colCount = colCount;
-	        this.rowCount = rowCount;
-	        this.shape = new createjs.Shape();
-	        this.shape.graphics
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var Board = (function (_super) {
+	    __extends(Board, _super);
+	    function Board(cellWidth, colsCount, rowsCount) {
+	        if (cellWidth === void 0) { cellWidth = 30; }
+	        if (colsCount === void 0) { colsCount = 10; }
+	        if (rowsCount === void 0) { rowsCount = 20; }
+	        _super.call(this);
+	        this.cellWidth = cellWidth;
+	        this.colsCount = colsCount;
+	        this.rowsCount = rowsCount;
+	        this.init();
+	    }
+	    Board.prototype.init = function () {
+	        this.graphics
 	            .beginFill('rgba(0, 0, 0, 0.5)')
 	            .drawRect(0, 0, this.getWidth(), this.getHeight());
-	    }
+	    };
 	    Board.prototype.getWidth = function () {
-	        return this.blockWidth * this.colCount;
+	        return this.cellWidth * this.colsCount;
 	    };
 	    Board.prototype.getHeight = function () {
-	        return this.blockWidth * this.rowCount;
+	        return this.cellWidth * this.rowsCount;
 	    };
-	    Object.defineProperty(Board.prototype, "x", {
-	        get: function () {
-	            return this.shape.x;
-	        },
-	        set: function (x) {
-	            this.shape.x = x;
-	        },
-	        enumerable: true,
-	        configurable: true
-	    });
-	    Object.defineProperty(Board.prototype, "y", {
-	        get: function () {
-	            return this.shape.y;
-	        },
-	        set: function (y) {
-	            this.shape.y = y;
-	        },
-	        enumerable: true,
-	        configurable: true
-	    });
 	    return Board;
-	}());
+	}(createjs.Shape));
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Board;
 
