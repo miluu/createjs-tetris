@@ -7,7 +7,7 @@ export default class Cell extends createjs.Shape {
   }
 
   init(): void {
-    const shapeWidth = this.cellWidth - 4
+    const shapeWidth = this.cellWidth - 4;
     this.graphics
       .beginFill('#000')
       .drawRect(2, 2, shapeWidth, shapeWidth);

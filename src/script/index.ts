@@ -6,15 +6,20 @@ import Block from './components/Block';
 import * as _ from 'lodash';
 import config from './config';
 
+createjs.Ticker.timingMode = createjs.Ticker.RAF;
+createjs.Ticker.on('tick', function() {
+  stage.update();
+});
+
 const board = new Board(config.CELL_WIDTH, config.COLS_COUNT, config.ROWS_COUNT);
 board.x = config.BOARD_POSITION_X;
 board.y = config.BOARD_POSITION_Y;
 stage.addChild(board);
 
-const block = new Block(config.CELL_WIDTH, Block.Type.O);
-block.x = config.BOARD_POSITION_X;
-block.y = config.BOARD_POSITION_Y;
+const block = new Block(config.CELL_WIDTH, Block.Type.T);
+block.x = config.BOARD_POSITION_X + config.CELL_WIDTH * 3;
+block.y = config.BOARD_POSITION_Y + config.CELL_WIDTH * 3;
 stage.addChild(block);
 
 stage.update();
-
+(<any>window).block = block;

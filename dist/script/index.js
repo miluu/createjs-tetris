@@ -55,27 +55,22 @@
 	"use strict";
 	var stage_1 = __webpack_require__(2);
 	var Board_1 = __webpack_require__(3);
-	var Cell_1 = __webpack_require__(4);
-	var _ = __webpack_require__(5);
-	var gameConfig = {
-	    CELL_WIDTH: 30,
-	    COLS_COUNT: 10,
-	    ROWS_COUNT: 20
-	};
-	var board = new Board_1.default(gameConfig.CELL_WIDTH, gameConfig.COLS_COUNT, gameConfig.ROWS_COUNT);
-	board.x = board.y = 20;
-	stage_1.default.addChild(board);
-	var cells = [];
-	_.times(gameConfig.COLS_COUNT, function (col) {
-	    _.times(gameConfig.ROWS_COUNT, function (row) {
-	        var cell = new Cell_1.default(gameConfig.CELL_WIDTH);
-	        stage_1.default.addChild(cell);
-	        cell.x = col * gameConfig.CELL_WIDTH + 20;
-	        cell.y = row * gameConfig.CELL_WIDTH + 20;
-	        cells.push(cell);
-	    });
+	var Block_1 = __webpack_require__(4);
+	var config_1 = __webpack_require__(8);
+	createjs.Ticker.timingMode = createjs.Ticker.RAF;
+	createjs.Ticker.on('tick', function () {
+	    stage_1.default.update();
 	});
+	var board = new Board_1.default(config_1.default.CELL_WIDTH, config_1.default.COLS_COUNT, config_1.default.ROWS_COUNT);
+	board.x = config_1.default.BOARD_POSITION_X;
+	board.y = config_1.default.BOARD_POSITION_Y;
+	stage_1.default.addChild(board);
+	var block = new Block_1.default(config_1.default.CELL_WIDTH, Block_1.default.Type.T);
+	block.x = config_1.default.BOARD_POSITION_X + config_1.default.CELL_WIDTH * 3;
+	block.y = config_1.default.BOARD_POSITION_Y + config_1.default.CELL_WIDTH * 3;
+	stage_1.default.addChild(block);
 	stage_1.default.update();
+	window.block = block;
 
 
 /***/ },
@@ -131,6 +126,149 @@
 
 /***/ },
 /* 4 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/// <reference path="../../../typings/index.d.ts" />
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var cell_1 = __webpack_require__(5);
+	var _ = __webpack_require__(6);
+	var Block = (function (_super) {
+	    __extends(Block, _super);
+	    function Block(cellWidth, blockType, blockRotation) {
+	        if (cellWidth === void 0) { cellWidth = 30; }
+	        if (blockRotation === void 0) { blockRotation = 0; }
+	        _super.call(this);
+	        this.cellWidth = cellWidth;
+	        if (!_.includes(this._allTypes(), blockType)) {
+	            console.log(1);
+	            this.blockType = this._randomType();
+	        }
+	        else {
+	            this.blockType = blockType;
+	        }
+	        this.blockRotation = blockRotation;
+	    }
+	    Block.prototype._buildCells = function () {
+	        var _this = this;
+	        var cells = [];
+	        _.times(4, function () {
+	            var cell = new cell_1.default(_this.cellWidth);
+	            cells.push(cell);
+	            _this.addChild(cell);
+	        });
+	        this._cells = cells;
+	    };
+	    Object.defineProperty(Block.prototype, "blockType", {
+	        get: function () {
+	            return this._blockType;
+	        },
+	        set: function (blockType) {
+	            this._blockType = blockType;
+	            this._update();
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Object.defineProperty(Block.prototype, "blockRotation", {
+	        get: function () {
+	            return this._blockRotation;
+	        },
+	        set: function (blockRotation) {
+	            if (!this._cells) {
+	                this._buildCells();
+	            }
+	            blockRotation = Math.floor(Math.abs(blockRotation)) % 4;
+	            this._blockRotation = blockRotation;
+	            this._update();
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    ;
+	    Block.prototype._update = function () {
+	        var _this = this;
+	        var shape = this._getShape();
+	        var shapeBlockRotationCount = shape.length;
+	        var rotationShape = shape[this._blockRotation % shapeBlockRotationCount];
+	        _.forEach(rotationShape, function (cellPos, i) {
+	            _this._cells[i].x = _this.cellWidth * cellPos.x;
+	            _this._cells[i].y = _this.cellWidth * cellPos.y;
+	        });
+	    };
+	    Block.prototype._randomType = function () {
+	        console.log(2);
+	        var types = this._allTypes();
+	        var typesCount = types.length;
+	        var r = Math.floor(Math.random() * typesCount);
+	        return types[r];
+	    };
+	    Block.prototype._allTypes = function () {
+	        var types = [];
+	        _.forIn(Block.Type, function (blockType) {
+	            types.push(blockType);
+	        });
+	        return types;
+	    };
+	    Block.prototype._getShape = function () {
+	        return Block._shapes[this.blockType];
+	    };
+	    Block._shapes = {
+	        O: [
+	            [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 0, y: 1 }, { x: 1, y: 1 }]
+	        ],
+	        L: [
+	            [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 1, y: 2 }],
+	            [{ x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 0, y: 3 }],
+	            [{ x: -1, y: 2 }, { x: 0, y: 2 }, { x: 0, y: 3 }, { x: 0, y: 4 }],
+	            [{ x: -2, y: 2 }, { x: -1, y: 2 }, { x: 0, y: 2 }, { x: 0, y: 1 }]
+	        ],
+	        J: [
+	            [{ x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 2 }, { x: 0, y: 2 }],
+	            [{ x: 1, y: 1 }, { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 }],
+	            [{ x: 2, y: 2 }, { x: 1, y: 2 }, { x: 1, y: 3 }, { x: 1, y: 4 }],
+	            [{ x: -1, y: 2 }, { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 1, y: 3 }]
+	        ],
+	        S: [
+	            [{ x: 2, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 }],
+	            [{ x: 1, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 2 }]
+	        ],
+	        Z: [
+	            [{ x: 0, y: 0 }, { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 2, y: 1 }],
+	            [{ x: 2, y: 0 }, { x: 2, y: 1 }, { x: 1, y: 1 }, { x: 1, y: 2 }]
+	        ],
+	        T: [
+	            [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 1, y: 0 }],
+	            [{ x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 2 }, { x: 2, y: 1 }],
+	            [{ x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 1, y: 2 }],
+	            [{ x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 2 }, { x: 0, y: 1 }]
+	        ],
+	        I: [
+	            [{ x: 0, y: 0 }, { x: 0, y: 1 }, { x: 0, y: 2 }, { x: 0, y: 3 }],
+	            [{ x: -1, y: 2 }, { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 2, y: 2 }]
+	        ]
+	    };
+	    Block.Type = {
+	        O: 'O',
+	        L: 'L',
+	        J: 'J',
+	        S: 'S',
+	        Z: 'Z',
+	        T: 'T',
+	        I: 'I'
+	    };
+	    return Block;
+	}(createjs.Container));
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = Block;
+
+
+/***/ },
+/* 5 */
 /***/ function(module, exports) {
 
 	/// <reference path="../../../typings/index.d.ts" />
@@ -160,7 +298,7 @@
 
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/**
@@ -16568,10 +16706,10 @@
 	  }
 	}.call(this));
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(6)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)(module), (function() { return this; }())))
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -16584,6 +16722,21 @@
 		}
 		return module;
 	}
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = {
+	    CELL_WIDTH: 30,
+	    COLS_COUNT: 10,
+	    ROWS_COUNT: 20,
+	    BOARD_POSITION_X: 20,
+	    BOARD_POSITION_Y: 20
+	};
 
 
 /***/ }
