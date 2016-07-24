@@ -54,23 +54,15 @@
 	/// <reference path="../../typings/index.d.ts" />
 	"use strict";
 	var stage_1 = __webpack_require__(2);
-	var Board_1 = __webpack_require__(3);
-	var Block_1 = __webpack_require__(4);
-	var config_1 = __webpack_require__(8);
+	var NextBlock_1 = __webpack_require__(3);
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.on('tick', function () {
 	    stage_1.default.update();
 	});
-	var board = new Board_1.default(config_1.default.CELL_WIDTH, config_1.default.COLS_COUNT, config_1.default.ROWS_COUNT);
-	board.x = config_1.default.BOARD_POSITION_X;
-	board.y = config_1.default.BOARD_POSITION_Y;
-	stage_1.default.addChild(board);
-	var block = new Block_1.default(config_1.default.CELL_WIDTH, Block_1.default.Type.T);
-	block.x = config_1.default.BOARD_POSITION_X;
-	block.y = config_1.default.BOARD_POSITION_Y;
-	stage_1.default.addChild(block);
+	var nextBlock = new NextBlock_1.default();
+	stage_1.default.addChild(nextBlock);
 	stage_1.default.update();
-	window.block = block;
+	window.nextBlock = nextBlock;
 
 
 /***/ },
@@ -86,7 +78,7 @@
 
 /***/ },
 /* 3 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	/// <reference path="../../../typings/index.d.ts" />
 	"use strict";
@@ -95,33 +87,48 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Board = (function (_super) {
-	    __extends(Board, _super);
-	    function Board(cellWidth, colsCount, rowsCount) {
-	        if (cellWidth === void 0) { cellWidth = 30; }
-	        if (colsCount === void 0) { colsCount = 10; }
-	        if (rowsCount === void 0) { rowsCount = 20; }
+	var Block_1 = __webpack_require__(4);
+	var NextBlock = (function (_super) {
+	    __extends(NextBlock, _super);
+	    function NextBlock(blockType, blockRotation, _cellWidth, _colsCount, _rowsCount) {
+	        if (_cellWidth === void 0) { _cellWidth = 30; }
+	        if (_colsCount === void 0) { _colsCount = 4; }
+	        if (_rowsCount === void 0) { _rowsCount = 4; }
 	        _super.call(this);
-	        this.cellWidth = cellWidth;
-	        this.colsCount = colsCount;
-	        this.rowsCount = rowsCount;
-	        this.init();
+	        this.blockType = blockType;
+	        this.blockRotation = blockRotation;
+	        this._cellWidth = _cellWidth;
+	        this._colsCount = _colsCount;
+	        this._rowsCount = _rowsCount;
+	        this._createBg();
+	        this._createBlock();
+	        this.updateBlockPosition();
 	    }
-	    Board.prototype.init = function () {
-	        this.graphics
+	    NextBlock.prototype.showBlock = function () {
+	        this.addChild(this.block);
+	    };
+	    NextBlock.prototype.hideBlock = function () {
+	        this.removeChild(this.block);
+	    };
+	    NextBlock.prototype.updateBlockPosition = function () {
+	        var blockInfo = this.block.getRealShapeInfo();
+	        this.block.x = ((this._colsCount - blockInfo.width) / 2 - blockInfo.x) * this._cellWidth;
+	        this.block.y = ((this._rowsCount - blockInfo.height) / 2 - blockInfo.y) * this._cellWidth;
+	    };
+	    NextBlock.prototype._createBg = function () {
+	        var bg = new createjs.Shape();
+	        bg.graphics
 	            .beginFill('rgba(0, 0, 0, 0.5)')
-	            .drawRect(0, 0, this.getWidth(), this.getHeight());
+	            .drawRect(0, 0, this._cellWidth * this._colsCount, this._cellWidth * this._rowsCount);
+	        this.addChild(bg);
 	    };
-	    Board.prototype.getWidth = function () {
-	        return this.cellWidth * this.colsCount;
+	    NextBlock.prototype._createBlock = function () {
+	        this.block = new Block_1.default(this._cellWidth, this.blockType, this.blockRotation);
 	    };
-	    Board.prototype.getHeight = function () {
-	        return this.cellWidth * this.rowsCount;
-	    };
-	    return Board;
-	}(createjs.Shape));
+	    return NextBlock;
+	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = Board;
+	exports.default = NextBlock;
 
 
 /***/ },
@@ -152,15 +159,18 @@
 	        }
 	        this.blockRotation = blockRotation;
 	    }
-	    Block.prototype._buildCells = function () {
-	        var _this = this;
-	        var cells = [];
-	        _.times(4, function () {
-	            var cell = new cell_1.default(_this._cellWidth);
-	            cells.push(cell);
-	            _this.addChild(cell);
-	        });
-	        this._cells = cells;
+	    Block.prototype.getRealShapeInfo = function () {
+	        var rotationShape = this._getRotationShape();
+	        var minX = _.minBy(rotationShape, 'x').x;
+	        var minY = _.minBy(rotationShape, 'y').y;
+	        var maxX = _.maxBy(rotationShape, 'x').x;
+	        var maxY = _.maxBy(rotationShape, 'y').y;
+	        return {
+	            x: minX,
+	            y: minY,
+	            width: maxX - minX + 1,
+	            height: maxY - minY + 1
+	        };
 	    };
 	    Object.defineProperty(Block.prototype, "blockType", {
 	        get: function () {
@@ -189,11 +199,19 @@
 	        configurable: true
 	    });
 	    ;
+	    Block.prototype._buildCells = function () {
+	        var _this = this;
+	        var cells = [];
+	        _.times(4, function () {
+	            var cell = new cell_1.default(_this._cellWidth);
+	            cells.push(cell);
+	            _this.addChild(cell);
+	        });
+	        this._cells = cells;
+	    };
 	    Block.prototype._update = function () {
 	        var _this = this;
-	        var shape = this._getShape();
-	        var shapeBlockRotationCount = shape.length;
-	        var rotationShape = shape[this._blockRotation % shapeBlockRotationCount];
+	        var rotationShape = this._getRotationShape();
 	        _.forEach(rotationShape, function (cellPos, i) {
 	            _this._cells[i].x = _this._cellWidth * cellPos.x;
 	            _this._cells[i].y = _this._cellWidth * cellPos.y;
@@ -215,6 +233,12 @@
 	    };
 	    Block.prototype._getShape = function () {
 	        return Block._shapes[this.blockType];
+	    };
+	    Block.prototype._getRotationShape = function () {
+	        var shape = this._getShape();
+	        var shapeBlockRotationCount = shape.length;
+	        var rotationShape = shape[this._blockRotation % shapeBlockRotationCount];
+	        return rotationShape;
 	    };
 	    Block._shapes = {
 	        O: [
@@ -16727,21 +16751,6 @@
 		}
 		return module;
 	}
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
-
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = {
-	    CELL_WIDTH: 30,
-	    COLS_COUNT: 10,
-	    ROWS_COUNT: 20,
-	    BOARD_POSITION_X: 20,
-	    BOARD_POSITION_Y: 20
-	};
 
 
 /***/ }

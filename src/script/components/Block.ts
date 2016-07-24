@@ -23,14 +23,18 @@ export default class Block extends createjs.Container {
     this.blockRotation = blockRotation;
   }
 
-  private _buildCells(): void {
-    const cells: Cell[] = [];
-    _.times(4, () => {
-      const cell = new Cell(this._cellWidth);
-      cells.push(cell);
-      this.addChild(cell);
-    });
-    this._cells = cells;
+  getRealShapeInfo() {
+    const rotationShape = this._getRotationShape();
+    const minX = _.minBy(rotationShape, 'x').x;
+    const minY = _.minBy(rotationShape, 'y').y;
+    const maxX = _.maxBy(rotationShape, 'x').x;
+    const maxY = _.maxBy(rotationShape, 'y').y;
+    return {
+      x: minX,
+      y: minY,
+      width: maxX - minX + 1,
+      height: maxY - minY + 1
+    }
   }
 
   get blockType() {
@@ -53,10 +57,18 @@ export default class Block extends createjs.Container {
     this._update();
   }
 
+  private _buildCells(): void {
+    const cells: Cell[] = [];
+    _.times(4, () => {
+      const cell = new Cell(this._cellWidth);
+      cells.push(cell);
+      this.addChild(cell);
+    });
+    this._cells = cells;
+  }
+
   private _update() {
-    const shape = this._getShape();
-    const shapeBlockRotationCount = shape.length;
-    const rotationShape = shape[this._blockRotation % shapeBlockRotationCount];
+    const rotationShape = this._getRotationShape();
     _.forEach(rotationShape, (cellPos, i) => {
       this._cells[i].x = this._cellWidth * cellPos.x;
       this._cells[i].y = this._cellWidth * cellPos.y;
@@ -81,6 +93,13 @@ export default class Block extends createjs.Container {
 
   private _getShape(): IBlockCell[][] {
     return Block._shapes[this.blockType];
+  }
+
+  private _getRotationShape(): IBlockCell[] {
+    const shape = this._getShape();
+    const shapeBlockRotationCount = shape.length;
+    const rotationShape = shape[this._blockRotation % shapeBlockRotationCount];
+    return rotationShape;
   }
 
   private static _shapes: {[key: string]: IBlockCell[][]} = {
