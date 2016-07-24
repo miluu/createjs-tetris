@@ -60,6 +60,8 @@
 	    stage_1.default.update();
 	});
 	var nextBlock = new NextBlock_1.default();
+	nextBlock.showBlock();
+	nextBlock.updateBlockPosition();
 	stage_1.default.addChild(nextBlock);
 	stage_1.default.update();
 	window.nextBlock = nextBlock;
@@ -110,6 +112,16 @@
 	    NextBlock.prototype.hideBlock = function () {
 	        this.removeChild(this.block);
 	    };
+	    NextBlock.prototype.changeBlock = function (blockType, blockRotation) {
+	        this.block.blockType = blockType;
+	        this.block.blockRotation = blockRotation;
+	        this.updateBlockPosition();
+	    };
+	    NextBlock.prototype.changeRandom = function () {
+	        var randomType = Block_1.default.randomType();
+	        var randomRotation = Block_1.default.randomRotation();
+	        this.changeBlock(randomType, randomRotation);
+	    };
 	    NextBlock.prototype.updateBlockPosition = function () {
 	        var blockInfo = this.block.getRealShapeInfo();
 	        this.block.x = ((this._colsCount - blockInfo.width) / 2 - blockInfo.x) * this._cellWidth;
@@ -148,14 +160,16 @@
 	    __extends(Block, _super);
 	    function Block(_cellWidth, blockType, blockRotation) {
 	        if (_cellWidth === void 0) { _cellWidth = 30; }
-	        if (blockRotation === void 0) { blockRotation = 0; }
 	        _super.call(this);
 	        this._cellWidth = _cellWidth;
-	        if (!_.includes(this._allTypes(), blockType)) {
-	            this.blockType = this._randomType();
+	        if (!_.includes(Block._allTypes(), blockType)) {
+	            this.blockType = Block.randomType();
 	        }
 	        else {
 	            this.blockType = blockType;
+	        }
+	        if (_.isUndefined(blockRotation)) {
+	            blockRotation = Block.randomRotation();
 	        }
 	        this.blockRotation = blockRotation;
 	    }
@@ -217,14 +231,16 @@
 	            _this._cells[i].y = _this._cellWidth * cellPos.y;
 	        });
 	    };
-	    Block.prototype._randomType = function () {
-	        console.log(2);
+	    Block.randomType = function () {
 	        var types = this._allTypes();
 	        var typesCount = types.length;
 	        var r = Math.floor(Math.random() * typesCount);
 	        return types[r];
 	    };
-	    Block.prototype._allTypes = function () {
+	    Block.randomRotation = function () {
+	        return Math.floor(Math.random() * 4);
+	    };
+	    Block._allTypes = function () {
 	        var types = [];
 	        _.forIn(Block.Type, function (blockType) {
 	            types.push(blockType);

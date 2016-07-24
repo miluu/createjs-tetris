@@ -19,6 +19,18 @@ export default class NextBlock extends createjs.Container {
     this.removeChild(this.block);
   }
 
+  changeBlock(blockType: string, blockRotation: number) {
+    this.block.blockType = blockType;
+    this.block.blockRotation = blockRotation;
+    this.updateBlockPosition();
+  }
+
+  changeRandom() {
+    const randomType = Block.randomType();
+    const randomRotation = Block.randomRotation();
+    this.changeBlock(randomType, randomRotation);
+  }
+
   updateBlockPosition() {
     const blockInfo = this.block.getRealShapeInfo();
     this.block.x = ((this._colsCount - blockInfo.width) / 2 - blockInfo.x) * this._cellWidth;

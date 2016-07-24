@@ -13,12 +13,15 @@ export default class Block extends createjs.Container {
   private _blockType: string;
   private _cells: Cell[];
 
-  constructor(private _cellWidth: number = 30, blockType?: string, blockRotation: number = 0 ) {
+  constructor(private _cellWidth: number = 30, blockType?: string, blockRotation?: number) {
     super();
-    if (!_.includes(this._allTypes(), blockType)) {
-      this.blockType = this._randomType();
+    if (!_.includes(Block._allTypes(), blockType)) {
+      this.blockType = Block.randomType();
     } else {
       this.blockType = blockType;
+    }
+    if (_.isUndefined(blockRotation)) {
+      blockRotation = Block.randomRotation();
     }
     this.blockRotation = blockRotation;
   }
@@ -34,7 +37,7 @@ export default class Block extends createjs.Container {
       y: minY,
       width: maxX - minX + 1,
       height: maxY - minY + 1
-    }
+    };
   }
 
   get blockType() {
@@ -75,15 +78,18 @@ export default class Block extends createjs.Container {
     });
   }
 
-  private _randomType(): string {
-    console.log(2);
+  static randomType(): string {
     const types = this._allTypes();
     const typesCount = types.length;
     const r = Math.floor(Math.random() * typesCount);
     return types[r];
   }
 
-  private _allTypes(): string[] {
+  static randomRotation(): number {
+    return Math.floor(Math.random() * 4);
+  }
+
+  private static _allTypes(): string[] {
     let types: string[] = [];
     _.forIn(Block.Type, function(blockType) {
       types.push(blockType);

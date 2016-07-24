@@ -13,6 +13,8 @@ createjs.Ticker.on('tick', function() {
 });
 
 const nextBlock = new NextBlock();
+nextBlock.showBlock();
+nextBlock.updateBlockPosition();
 stage.addChild(nextBlock);
 
 stage.update();
