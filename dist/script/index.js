@@ -54,17 +54,19 @@
 	/// <reference path="../../typings/index.d.ts" />
 	"use strict";
 	var stage_1 = __webpack_require__(2);
-	var NextBlock_1 = __webpack_require__(3);
+	var NextBlocks_1 = __webpack_require__(3);
+	var config_1 = __webpack_require__(9);
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.on('tick', function () {
 	    stage_1.default.update();
 	});
-	var nextBlock = new NextBlock_1.default();
-	nextBlock.showBlock();
-	nextBlock.updateBlockPosition();
-	stage_1.default.addChild(nextBlock);
+	var nextBlocks = new NextBlocks_1.default(4, config_1.default.CELL_WIDTH);
+	nextBlocks.on('click', function () {
+	    console.log(nextBlocks.next());
+	});
+	stage_1.default.addChild(nextBlocks);
 	stage_1.default.update();
-	window.nextBlock = nextBlock;
+	window.nextBlocks = nextBlocks;
 
 
 /***/ },
@@ -89,58 +91,66 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var Block_1 = __webpack_require__(4);
-	var NextBlock = (function (_super) {
-	    __extends(NextBlock, _super);
-	    function NextBlock(blockType, blockRotation, _cellWidth, _colsCount, _rowsCount) {
+	var BlockBoard_1 = __webpack_require__(4);
+	var Block_1 = __webpack_require__(5);
+	var _ = __webpack_require__(7);
+	var NextBlocks = (function (_super) {
+	    __extends(NextBlocks, _super);
+	    function NextBlocks(blockCount, _cellWidth, _colsCount, _rowsCount) {
+	        if (blockCount === void 0) { blockCount = 1; }
 	        if (_cellWidth === void 0) { _cellWidth = 30; }
 	        if (_colsCount === void 0) { _colsCount = 4; }
 	        if (_rowsCount === void 0) { _rowsCount = 4; }
 	        _super.call(this);
-	        this.blockType = blockType;
-	        this.blockRotation = blockRotation;
+	        this.blockCount = blockCount;
 	        this._cellWidth = _cellWidth;
 	        this._colsCount = _colsCount;
 	        this._rowsCount = _rowsCount;
-	        this._createBg();
-	        this._createBlock();
-	        this.updateBlockPosition();
+	        this._init();
 	    }
-	    NextBlock.prototype.showBlock = function () {
-	        this.addChild(this.block);
+	    NextBlocks.prototype.next = function () {
+	        var _this = this;
+	        var nextBlocksInfo = this.getNextBlocksInfo();
+	        var nextBlockInfo = _.first(nextBlocksInfo);
+	        _.forEach(this._blockBoards, function (BlockBoard, i) {
+	            if (i < _this.blockCount - 1) {
+	                var nextInfo = nextBlocksInfo[i + 1];
+	                BlockBoard.changeBlock(nextInfo.blockType, nextInfo.blockRotation);
+	            }
+	            else {
+	                BlockBoard.changeRandom();
+	            }
+	        });
+	        return nextBlockInfo;
 	    };
-	    NextBlock.prototype.hideBlock = function () {
-	        this.removeChild(this.block);
+	    NextBlocks.prototype.getNextBlocksInfo = function () {
+	        var ret = [];
+	        _.forEach(this._blockBoards, function (blockBoard) {
+	            ret.push({
+	                blockType: blockBoard.block.blockType,
+	                blockRotation: blockBoard.block.blockRotation
+	            });
+	        });
+	        return ret;
 	    };
-	    NextBlock.prototype.changeBlock = function (blockType, blockRotation) {
-	        this.block.blockType = blockType;
-	        this.block.blockRotation = blockRotation;
-	        this.updateBlockPosition();
+	    NextBlocks.prototype._init = function () {
+	        this._blockBoards = [];
+	        this._initBlockBoard();
 	    };
-	    NextBlock.prototype.changeRandom = function () {
-	        var randomType = Block_1.default.randomType();
-	        var randomRotation = Block_1.default.randomRotation();
-	        this.changeBlock(randomType, randomRotation);
+	    NextBlocks.prototype._initBlockBoard = function () {
+	        var _this = this;
+	        _.times(this.blockCount, function (i) {
+	            var blockBoard = new BlockBoard_1.default(Block_1.default.randomType(), Block_1.default.randomRotation(), _this._cellWidth, _this._colsCount, _this._rowsCount);
+	            blockBoard.x = 0;
+	            blockBoard.y = i * _this._cellWidth * _this._rowsCount + i * _this._cellWidth;
+	            _this.addChild(blockBoard);
+	            _this._blockBoards.push(blockBoard);
+	        });
 	    };
-	    NextBlock.prototype.updateBlockPosition = function () {
-	        var blockInfo = this.block.getRealShapeInfo();
-	        this.block.x = ((this._colsCount - blockInfo.width) / 2 - blockInfo.x) * this._cellWidth;
-	        this.block.y = ((this._rowsCount - blockInfo.height) / 2 - blockInfo.y) * this._cellWidth;
-	    };
-	    NextBlock.prototype._createBg = function () {
-	        var bg = new createjs.Shape();
-	        bg.graphics
-	            .beginFill('rgba(0, 0, 0, 0.5)')
-	            .drawRect(0, 0, this._cellWidth * this._colsCount, this._cellWidth * this._rowsCount);
-	        this.addChild(bg);
-	    };
-	    NextBlock.prototype._createBlock = function () {
-	        this.block = new Block_1.default(this._cellWidth, this.blockType, this.blockRotation);
-	    };
-	    return NextBlock;
+	    return NextBlocks;
 	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = NextBlock;
+	exports.default = NextBlocks;
 
 
 /***/ },
@@ -154,8 +164,74 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var cell_1 = __webpack_require__(5);
-	var _ = __webpack_require__(6);
+	var Block_1 = __webpack_require__(5);
+	var BlockBoard = (function (_super) {
+	    __extends(BlockBoard, _super);
+	    function BlockBoard(blockType, blockRotation, _cellWidth, _colsCount, _rowsCount) {
+	        if (_cellWidth === void 0) { _cellWidth = 30; }
+	        if (_colsCount === void 0) { _colsCount = 4; }
+	        if (_rowsCount === void 0) { _rowsCount = 4; }
+	        _super.call(this);
+	        this.blockType = blockType;
+	        this.blockRotation = blockRotation;
+	        this._cellWidth = _cellWidth;
+	        this._colsCount = _colsCount;
+	        this._rowsCount = _rowsCount;
+	        this._createBg();
+	        this._createBlock();
+	        this.updateBlockPosition();
+	        this.showBlock();
+	    }
+	    BlockBoard.prototype.showBlock = function () {
+	        this.addChild(this.block);
+	    };
+	    BlockBoard.prototype.hideBlock = function () {
+	        this.removeChild(this.block);
+	    };
+	    BlockBoard.prototype.changeBlock = function (blockType, blockRotation) {
+	        this.block.blockType = blockType;
+	        this.block.blockRotation = blockRotation;
+	        this.updateBlockPosition();
+	    };
+	    BlockBoard.prototype.changeRandom = function () {
+	        var randomType = Block_1.default.randomType();
+	        var randomRotation = Block_1.default.randomRotation();
+	        this.changeBlock(randomType, randomRotation);
+	    };
+	    BlockBoard.prototype.updateBlockPosition = function () {
+	        var blockInfo = this.block.getRealShapeInfo();
+	        this.block.x = ((this._colsCount - blockInfo.width) / 2 - blockInfo.x) * this._cellWidth;
+	        this.block.y = ((this._rowsCount - blockInfo.height) / 2 - blockInfo.y) * this._cellWidth;
+	    };
+	    BlockBoard.prototype._createBg = function () {
+	        var bg = new createjs.Shape();
+	        bg.graphics
+	            .beginFill('rgba(0, 0, 0, 0.5)')
+	            .drawRect(0, 0, this._cellWidth * this._colsCount, this._cellWidth * this._rowsCount);
+	        this.addChild(bg);
+	    };
+	    BlockBoard.prototype._createBlock = function () {
+	        this.block = new Block_1.default(this._cellWidth, this.blockType, this.blockRotation);
+	    };
+	    return BlockBoard;
+	}(createjs.Container));
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = BlockBoard;
+
+
+/***/ },
+/* 5 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/// <reference path="../../../typings/index.d.ts" />
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var cell_1 = __webpack_require__(6);
+	var _ = __webpack_require__(7);
 	var Block = (function (_super) {
 	    __extends(Block, _super);
 	    function Block(_cellWidth, blockType, blockRotation) {
@@ -313,7 +389,7 @@
 
 
 /***/ },
-/* 5 */
+/* 6 */
 /***/ function(module, exports) {
 
 	/// <reference path="../../../typings/index.d.ts" />
@@ -343,7 +419,7 @@
 
 
 /***/ },
-/* 6 */
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
 	var __WEBPACK_AMD_DEFINE_RESULT__;/* WEBPACK VAR INJECTION */(function(module, global) {/**
@@ -16751,10 +16827,10 @@
 	  }
 	}.call(this));
 	
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(7)(module), (function() { return this; }())))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)(module), (function() { return this; }())))
 
 /***/ },
-/* 7 */
+/* 8 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -16767,6 +16843,21 @@
 		}
 		return module;
 	}
+
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = {
+	    CELL_WIDTH: 30,
+	    COLS_COUNT: 10,
+	    ROWS_COUNT: 20,
+	    BOARD_POSITION_X: 20,
+	    BOARD_POSITION_Y: 20
+	};
 
 
 /***/ }
