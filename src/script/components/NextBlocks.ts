@@ -43,7 +43,6 @@ export default class NextBlocks extends createjs.Container {
   }
 
   private _init() {
-    this._blockBoards = [];
     this._initBlockBoard();
     this._initTitle();
   }
@@ -52,13 +51,14 @@ export default class NextBlocks extends createjs.Container {
     const titleStr = 'NEXT';
     const title = new createjs.Text(titleStr);
     title.font = `${this._cellWidth}px Arial`;
-    title.lineWidth = this._cellWidth * this._colsCount;
-    title.textAlign = 'center';
+    const width = title.getMeasuredWidth();
+    title.x = (this._colsCount * this._cellWidth - width) / 2;
     this._title = title;
     this.addChild(title);
   }
 
   private _initBlockBoard() {
+    this._blockBoards = [];
     _.times(this.blockCount, (i) => {
       const blockBoard = new BlockBoard(Block.randomType(), Block.randomRotation(), this._cellWidth, this._colsCount, this._rowsCount);
       blockBoard.x = 0;
