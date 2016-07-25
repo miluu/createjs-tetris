@@ -1,13 +1,8 @@
 /// <reference path="../../../typings/index.d.ts" />
 
 import BlockBoard from './BlockBoard';
-import Block from './Block';
+import Block, {IBlockInfo} from './Block';
 import * as _ from 'lodash';
-
-interface IBlockInfo {
-  blockType: string;
-  blockRotation: number;
-}
 
 export default class NextBlocks extends createjs.Container {
   private _blockBoards: BlockBoard[];

@@ -3,9 +3,14 @@
 import Cell from './cell';
 import * as _ from 'lodash';
 
-interface IBlockCell {
+export interface IBlockCell {
   x: number;
   y: number;
+}
+
+export interface IBlockInfo {
+  blockType: string;
+  blockRotation: number;
 }
 
 export default class Block extends createjs.Container {
