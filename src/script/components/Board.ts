@@ -50,10 +50,6 @@ export default class Board extends createjs.Container {
         cell.y = row * this._cellWidth;
         this.addChild(cell);
         cellsRow.push(cell);
-        console.log(`[${row}][${col}]`);
-        console.log('x:', cell.x);
-        console.log('y:', cell.y);
-        console.log(cell);
       });
       this._cells.push(cellsRow);
     });
