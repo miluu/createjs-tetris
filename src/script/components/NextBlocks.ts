@@ -11,6 +11,7 @@ interface IBlockInfo {
 
 export default class NextBlocks extends createjs.Container {
   private _blockBoards: BlockBoard[];
+  private _title: createjs.Text;
   constructor(public blockCount: number = 1, private _cellWidth: number = 30, private _colsCount: number = 4, private _rowsCount = 4) {
     super();
     this._init();
@@ -44,13 +45,24 @@ export default class NextBlocks extends createjs.Container {
   private _init() {
     this._blockBoards = [];
     this._initBlockBoard();
+    this._initTitle();
+  }
+
+  private _initTitle() {
+    const titleStr = 'NEXT';
+    const title = new createjs.Text(titleStr);
+    title.font = `${this._cellWidth}px Arial`;
+    title.lineWidth = this._cellWidth * this._colsCount;
+    title.textAlign = 'center';
+    this._title = title;
+    this.addChild(title);
   }
 
   private _initBlockBoard() {
     _.times(this.blockCount, (i) => {
       const blockBoard = new BlockBoard(Block.randomType(), Block.randomRotation(), this._cellWidth, this._colsCount, this._rowsCount);
       blockBoard.x = 0;
-      blockBoard.y = i * this._cellWidth * this._rowsCount + i * this._cellWidth;
+      blockBoard.y = i * this._cellWidth * this._rowsCount + (i + 1.5) * this._cellWidth;
       this.addChild(blockBoard);
       this._blockBoards.push(blockBoard);
     });
