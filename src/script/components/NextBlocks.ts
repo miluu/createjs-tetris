@@ -7,7 +7,12 @@ import * as _ from 'lodash';
 export default class NextBlocks extends createjs.Container {
   private _blockBoards: BlockBoard[];
   private _title: createjs.Text;
-  constructor(public blockCount: number = 1, private _cellWidth: number = 30, private _colsCount: number = 4, private _rowsCount = 4) {
+  constructor(
+    public blockCount: number = 1,
+    private _cellWidth: number = 30,
+    private _colsCount: number = 4,
+    private _rowsCount = 4
+  ) {
     super();
     this._init();
   }

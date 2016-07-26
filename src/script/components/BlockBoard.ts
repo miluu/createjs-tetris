@@ -4,7 +4,13 @@ import Block from './Block';
 
 export default class BlockBoard extends createjs.Container {
   block: Block;
-  constructor(public blockType?: string, public blockRotation?: number, private _cellWidth: number = 30, private _colsCount: number = 4, private _rowsCount: number = 4) {
+  constructor(
+    public blockType?: string,
+    public blockRotation?: number,
+    private _cellWidth: number = 30,
+    private _colsCount: number = 4,
+    private _rowsCount: number = 4
+  ) {
     super();
     this._createBg();
     this._createBlock();

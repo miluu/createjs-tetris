@@ -8,7 +8,11 @@ export default class HoldBlock extends createjs.Container {
   private _blockBoard: BlockBoard;
   private _title: createjs.Text;
   private _blockInfo: IBlockInfo;
-  constructor(private _cellWidth: number = 30, private _colsCount: number = 4, private _rowsCount = 4) {
+  constructor(
+    private _cellWidth: number = 30,
+    private _colsCount: number = 4,
+    private _rowsCount = 4
+  ) {
     super();
     this._blockInfo = null;
     this._init();

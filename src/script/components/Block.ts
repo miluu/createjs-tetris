@@ -18,7 +18,11 @@ export default class Block extends createjs.Container {
   private _blockType: string;
   private _cells: Cell[];
 
-  constructor(private _cellWidth: number = 30, blockType?: string, blockRotation?: number) {
+  constructor(
+    private _cellWidth: number = 30,
+    blockType?: string,
+    blockRotation?: number
+  ) {
     super();
     if (!_.includes(Block._allTypes(), blockType)) {
       this.blockType = Block.randomType();
