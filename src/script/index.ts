@@ -6,8 +6,11 @@ import Block, {IBlockInfo} from './components/Block';
 import BlockBoard from './components/BlockBoard';
 import NextBlocks from './components/NextBlocks';
 import HoldBlock from './components/HoldBlock';
+import KeyController from './components/KeyController';
 import * as _ from 'lodash';
 import config from './config';
+
+const keyController = new KeyController();
 
 let activeBlockInfo: IBlockInfo = null;
 
@@ -19,6 +22,9 @@ stage.addChild(board);
 const activeBlock = new Block();
 activeBlock.y = config.CELL_WIDTH;
 activeBlock.x = config.CELL_WIDTH * 7;
+activeBlock.on('click', () => {
+  activeBlock.blockRotation++;
+});
 stage.addChild(activeBlock);
 activeBlock.visible = false;
 
@@ -67,3 +73,4 @@ function holdActiveBlock() {
 (<any>window).nextBlocks = nextBlocks;
 (<any>window).holdBlock = holdBlock;
 (<any>window).board = board;
+(<any>window).keyController = keyController;
