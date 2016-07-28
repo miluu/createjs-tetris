@@ -8,7 +8,8 @@ export const KEY = {
   left: 37,
   right: 39,
   space: 32,
-  enter: 13
+  enter: 13,
+  z: 90
 };
 
 type keyboardMehtod = (e?: KeyboardEvent) => void;
@@ -20,6 +21,7 @@ interface IKeyControllerMehtods {
   right?: keyboardMehtod;
   space?: keyboardMehtod;
   enter?: keyboardMehtod;
+  z?: keyboardMehtod;
   [key: string]: keyboardMehtod;
 }
 
@@ -37,7 +39,7 @@ export default class KeyController {
   private _enableKeys: number[];
   constructor(
     public onKeydown?: IKeyControllerMehtods,
-    public interval: number = 200,
+    public interval: number = 100,
     public firstIntervalRatio: number = 3,
     private _enabled: boolean = true
   ) {

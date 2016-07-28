@@ -60,34 +60,49 @@
 	var HoldBlock_1 = __webpack_require__(11);
 	var KeyController_1 = __webpack_require__(12);
 	var config_1 = __webpack_require__(13);
-	var keyController = new KeyController_1.default();
-	keyController.onKeydown.down = function () {
-	    console.log('======');
-	};
 	var activeBlockInfo = null;
 	var board = new Board_1.default();
 	board.y = config_1.default.CELL_WIDTH;
 	board.x = config_1.default.CELL_WIDTH * 4;
-	// stage.addChild(board);
+	stage_1.default.addChild(board);
 	var activeBlock = new Block_1.default();
 	activeBlock.y = config_1.default.CELL_WIDTH;
 	activeBlock.x = config_1.default.CELL_WIDTH * 7;
 	activeBlock.on('click', function () {
 	    activeBlock.blockRotation++;
 	});
-	// stage.addChild(activeBlock);
+	stage_1.default.addChild(activeBlock);
 	activeBlock.visible = false;
 	var nextBlocks = new NextBlocks_1.default(4, config_1.default.CELL_WIDTH);
 	nextBlocks.scaleX = nextBlocks.scaleY = .5;
 	nextBlocks.x = config_1.default.CELL_WIDTH * 15;
 	nextBlocks.y = config_1.default.CELL_WIDTH;
 	nextBlocks.on('click', activeNextBlock);
-	// stage.addChild(nextBlocks);
+	stage_1.default.addChild(nextBlocks);
 	var holdBlock = new HoldBlock_1.default(config_1.default.CELL_WIDTH);
 	holdBlock.scaleX = holdBlock.scaleY = .5;
 	holdBlock.x = holdBlock.y = config_1.default.CELL_WIDTH;
-	// stage.addChild(holdBlock);
+	stage_1.default.addChild(holdBlock);
 	holdBlock.on('click', holdActiveBlock);
+	var keyController = new KeyController_1.default();
+	keyController.onKeydown.up = function () {
+	    activeBlock.blockRotation++;
+	};
+	keyController.onKeydown.space = function () {
+	    activeNextBlock();
+	};
+	keyController.onKeydown.z = function () {
+	    holdActiveBlock();
+	};
+	keyController.onKeydown.down = function () {
+	    activeBlock.y += config_1.default.CELL_WIDTH;
+	};
+	keyController.onKeydown.left = function () {
+	    activeBlock.x -= config_1.default.CELL_WIDTH;
+	};
+	keyController.onKeydown.right = function () {
+	    activeBlock.x += config_1.default.CELL_WIDTH;
+	};
 	stage_1.default.update();
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
 	createjs.Ticker.on('tick', function () {
@@ -103,6 +118,8 @@
 	    activeBlockInfo = nextBlocks.next();
 	    activeBlock.blockType = activeBlockInfo.blockType;
 	    activeBlock.blockRotation = activeBlockInfo.blockRotation;
+	    activeBlock.y = config_1.default.CELL_WIDTH;
+	    activeBlock.x = config_1.default.CELL_WIDTH * 7;
 	}
 	function holdActiveBlock() {
 	    if (!activeBlockInfo) {
@@ -114,6 +131,8 @@
 	    }
 	    activeBlock.blockType = activeBlockInfo.blockType;
 	    activeBlock.blockRotation = activeBlockInfo.blockRotation;
+	    activeBlock.y = config_1.default.CELL_WIDTH;
+	    activeBlock.x = config_1.default.CELL_WIDTH * 7;
 	}
 	window.nextBlocks = nextBlocks;
 	window.holdBlock = holdBlock;
@@ -17113,12 +17132,13 @@
 	    left: 37,
 	    right: 39,
 	    space: 32,
-	    enter: 13
+	    enter: 13,
+	    z: 90
 	};
 	var KeyController = (function () {
 	    function KeyController(onKeydown, interval, firstIntervalRatio, _enabled) {
 	        var _this = this;
-	        if (interval === void 0) { interval = 200; }
+	        if (interval === void 0) { interval = 100; }
 	        if (firstIntervalRatio === void 0) { firstIntervalRatio = 3; }
 	        if (_enabled === void 0) { _enabled = true; }
 	        this.onKeydown = onKeydown;
