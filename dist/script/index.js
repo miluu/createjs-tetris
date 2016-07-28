@@ -61,29 +61,32 @@
 	var KeyController_1 = __webpack_require__(12);
 	var config_1 = __webpack_require__(13);
 	var keyController = new KeyController_1.default();
+	keyController.onKeydown.down = function () {
+	    console.log('======');
+	};
 	var activeBlockInfo = null;
 	var board = new Board_1.default();
 	board.y = config_1.default.CELL_WIDTH;
 	board.x = config_1.default.CELL_WIDTH * 4;
-	stage_1.default.addChild(board);
+	// stage.addChild(board);
 	var activeBlock = new Block_1.default();
 	activeBlock.y = config_1.default.CELL_WIDTH;
 	activeBlock.x = config_1.default.CELL_WIDTH * 7;
 	activeBlock.on('click', function () {
 	    activeBlock.blockRotation++;
 	});
-	stage_1.default.addChild(activeBlock);
+	// stage.addChild(activeBlock);
 	activeBlock.visible = false;
 	var nextBlocks = new NextBlocks_1.default(4, config_1.default.CELL_WIDTH);
 	nextBlocks.scaleX = nextBlocks.scaleY = .5;
 	nextBlocks.x = config_1.default.CELL_WIDTH * 15;
 	nextBlocks.y = config_1.default.CELL_WIDTH;
 	nextBlocks.on('click', activeNextBlock);
-	stage_1.default.addChild(nextBlocks);
+	// stage.addChild(nextBlocks);
 	var holdBlock = new HoldBlock_1.default(config_1.default.CELL_WIDTH);
 	holdBlock.scaleX = holdBlock.scaleY = .5;
 	holdBlock.x = holdBlock.y = config_1.default.CELL_WIDTH;
-	stage_1.default.addChild(holdBlock);
+	// stage.addChild(holdBlock);
 	holdBlock.on('click', holdActiveBlock);
 	stage_1.default.update();
 	createjs.Ticker.timingMode = createjs.Ticker.RAF;
@@ -124,7 +127,8 @@
 
 	/// <reference path="../../../typings/index.d.ts" />
 	"use strict";
-	var stage = new createjs.Stage('canvas');
+	exports.canvas = document.getElementById('canvas');
+	var stage = new createjs.Stage(exports.canvas);
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = stage;
 
@@ -17104,104 +17108,104 @@
 	"use strict";
 	var _ = __webpack_require__(4);
 	exports.KEY = {
-	    UP: 38,
-	    DOWN: 40,
-	    LEFT: 37,
-	    RIGHT: 39,
-	    SPACE: 32,
-	    ENTER: 13
+	    up: 38,
+	    down: 40,
+	    left: 37,
+	    right: 39,
+	    space: 32,
+	    enter: 13
 	};
 	var KeyController = (function () {
-	    function KeyController(on) {
-	        if (on === void 0) { on = true; }
-	        this._pressedKeys = [];
-	        if (on) {
-	            this.on();
-	        }
-	    }
-	    KeyController.prototype.on = function () {
+	    function KeyController(onKeydown, interval, firstIntervalRatio, _enabled) {
+	        var _this = this;
+	        if (interval === void 0) { interval = 200; }
+	        if (firstIntervalRatio === void 0) { firstIntervalRatio = 3; }
+	        if (_enabled === void 0) { _enabled = true; }
+	        this.onKeydown = onKeydown;
+	        this.interval = interval;
+	        this.firstIntervalRatio = firstIntervalRatio;
+	        this._enabled = _enabled;
+	        this._intervalFirst = {};
+	        this._intervaller = {};
+	        this.onKeydown = {};
+	        this._enableKeys = [];
+	        _.forIn(exports.KEY, function (keyCode, keyName) {
+	            _this._enableKeys.push(keyCode);
+	            _this._intervaller[keyName] = null;
+	            _this._intervalFirst[keyName] = true;
+	            _this.onKeydown[keyName] = null;
+	        });
+	        this.enabled = _enabled;
 	        this._listen();
+	    }
+	    Object.defineProperty(KeyController.prototype, "enabled", {
+	        get: function () {
+	            return this._enabled;
+	        },
+	        set: function (_enabled) {
+	            if (_enabled) {
+	                this.enable();
+	                return;
+	            }
+	            this.disable();
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    KeyController.prototype.enable = function () {
+	        this._enabled = true;
 	    };
-	    KeyController.prototype.off = function () {
-	        this._unListen();
-	        this._pressedKeys = [];
-	    };
-	    KeyController.prototype.getPressedKeys = function () {
-	        return this._pressedKeys;
+	    KeyController.prototype.disable = function () {
+	        this._enabled = false;
 	    };
 	    KeyController.prototype._listen = function () {
 	        window.addEventListener('keydown', this._keyDown.bind(this));
 	        window.addEventListener('keyup', this._keyUp.bind(this));
 	    };
 	    KeyController.prototype._keyDown = function (e) {
+	        var _this = this;
 	        e.preventDefault();
 	        e.stopPropagation();
 	        var keyCode = e.keyCode;
-	        switch (e.keyCode) {
-	            case exports.KEY.UP:
-	            case exports.KEY.DOWN:
-	            case exports.KEY.LEFT:
-	            case exports.KEY.RIGHT:
-	            case exports.KEY.SPACE:
-	            case exports.KEY.ENTER:
-	                if (!_.includes(this._pressedKeys, keyCode)) {
-	                    this._pressedKeys.push(keyCode);
-	                    console.log(this._prettyPressedKeys());
-	                }
-	                break;
-	            default:
-	                break;
+	        var keyName = this._getKeyName(keyCode);
+	        if (!keyName) {
+	            return;
 	        }
+	        var cb = this.onKeydown[keyName];
+	        if (this._intervalFirst[keyName]) {
+	            if (this._enabled && cb) {
+	                cb(e);
+	            }
+	            this._intervalFirst[keyName] = false;
+	            this._intervaller[keyName] = setTimeout(function () {
+	                if (_this._enabled && cb) {
+	                    cb(e);
+	                }
+	                _this._intervaller[keyName] = setInterval(function () {
+	                    if (_this._enabled && cb) {
+	                        cb(e);
+	                    }
+	                }, _this.interval);
+	            }, this._getFirstInterval());
+	        }
+	    };
+	    KeyController.prototype._getFirstInterval = function () {
+	        return this.firstIntervalRatio * this.interval;
+	    };
+	    KeyController.prototype._getKeyName = function (keyCode) {
+	        var keyName = _.findKey(exports.KEY, function (o) {
+	            return o === keyCode;
+	        });
+	        return keyName;
 	    };
 	    KeyController.prototype._keyUp = function (e) {
 	        e.preventDefault();
 	        e.stopPropagation();
 	        var keyCode = e.keyCode;
-	        switch (e.keyCode) {
-	            case exports.KEY.UP:
-	            case exports.KEY.DOWN:
-	            case exports.KEY.LEFT:
-	            case exports.KEY.RIGHT:
-	            case exports.KEY.SPACE:
-	            case exports.KEY.ENTER:
-	                _.pull(this._pressedKeys, keyCode);
-	                console.log(this._prettyPressedKeys());
-	                break;
-	            default:
-	                break;
-	        }
-	    };
-	    KeyController.prototype._unListen = function () {
-	        var keyDown = this._keyDown.bind(this);
-	        var keyUp = this._keyUp.bind(this);
-	        window.removeEventListener('keydown', keyDown);
-	        window.removeEventListener('keyup', keyUp);
-	    };
-	    KeyController.prototype._prettyPressedKeys = function () {
-	        var ret = [];
-	        _.forEach(this._pressedKeys, function (keyCode) {
-	            switch (keyCode) {
-	                case exports.KEY.UP:
-	                    ret.push('↑');
-	                    break;
-	                case exports.KEY.DOWN:
-	                    ret.push('↓');
-	                    break;
-	                case exports.KEY.LEFT:
-	                    ret.push('←');
-	                    break;
-	                case exports.KEY.RIGHT:
-	                    ret.push('→');
-	                    break;
-	                case exports.KEY.SPACE:
-	                    ret.push('□');
-	                    break;
-	                case exports.KEY.ENTER:
-	                    ret.push('✓');
-	                    break;
-	            }
-	        });
-	        return ret;
+	        var keyName = this._getKeyName(keyCode);
+	        clearInterval(this._intervaller[keyName]);
+	        clearTimeout(this._intervaller[keyName]);
+	        this._intervalFirst[keyName] = true;
 	    };
 	    return KeyController;
 	}());

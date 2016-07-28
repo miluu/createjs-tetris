@@ -3,31 +3,72 @@
 import * as _ from 'lodash';
 
 export const KEY = {
-  UP: 38,
-  DOWN: 40,
-  LEFT: 37,
-  RIGHT: 39,
-  SPACE: 32,
-  ENTER: 13
+  up: 38,
+  down: 40,
+  left: 37,
+  right: 39,
+  space: 32,
+  enter: 13
 };
 
+type keyboardMehtod = (e?: KeyboardEvent) => void;
+
+interface IKeyControllerMehtods {
+  up?: keyboardMehtod;
+  down?: keyboardMehtod;
+  left?: keyboardMehtod;
+  right?: keyboardMehtod;
+  space?: keyboardMehtod;
+  enter?: keyboardMehtod;
+  [key: string]: keyboardMehtod;
+}
+
+interface IIntervaller {
+  [key: string]: number;
+}
+
+interface IIntervalFirst {
+  [key: string]: boolean;
+}
+
 export default class KeyController {
-  private _pressedKeys: number[];
-  constructor(on: boolean = true) {
-    this._pressedKeys = [];
-    if (on) {
-      this.on();
-    }
-  }
-  on() {
+  private _intervaller: IIntervaller;
+  private _intervalFirst: IIntervalFirst;
+  private _enableKeys: number[];
+  constructor(
+    public onKeydown?: IKeyControllerMehtods,
+    public interval: number = 200,
+    public firstIntervalRatio: number = 3,
+    private _enabled: boolean = true
+  ) {
+    this._intervalFirst = {};
+    this._intervaller = {};
+    this.onKeydown = {};
+    this._enableKeys = [];
+    _.forIn(KEY, (keyCode, keyName) => {
+      this._enableKeys.push(keyCode);
+      this._intervaller[keyName] = null;
+      this._intervalFirst[keyName] = true;
+      this.onKeydown[keyName] = null;
+    });
+    this.enabled = _enabled;
     this._listen();
   }
-  off() {
-    this._unListen();
-    this._pressedKeys = [];
+  get enabled(): boolean {
+    return this._enabled;
   }
-  public getPressedKeys() {
-    return this._pressedKeys;
+  set enabled(_enabled: boolean) {
+    if (_enabled) {
+      this.enable();
+      return;
+    }
+    this.disable();
+  }
+  enable() {
+    this._enabled = true;
+  }
+  disable() {
+    this._enabled = false;
   }
   private _listen() {
     window.addEventListener('keydown', this._keyDown.bind(this));
@@ -37,70 +78,44 @@ export default class KeyController {
     e.preventDefault();
     e.stopPropagation();
     const {keyCode} = e;
-    switch (e.keyCode) {
-      case KEY.UP:
-      case KEY.DOWN:
-      case KEY.LEFT:
-      case KEY.RIGHT:
-      case KEY.SPACE:
-      case KEY.ENTER:
-        if (!_.includes(this._pressedKeys, keyCode)) {
-          this._pressedKeys.push(keyCode);
-          console.log(this._prettyPressedKeys());
-        }
-        break;
-      default:
-        break;
+    const keyName = this._getKeyName(keyCode);
+    if (!keyName) {
+      return;
     }
+    const cb = this.onKeydown[keyName];
+    if (this._intervalFirst[keyName]) {
+      if (this._enabled && cb) {
+        cb(e);
+      }
+      this._intervalFirst[keyName] = false;
+      this._intervaller[keyName] = setTimeout(() => {
+        if (this._enabled && cb) {
+          cb(e);
+        }
+        this._intervaller[keyName] = setInterval(() => {
+          if (this._enabled && cb) {
+            cb(e);
+          }
+        }, this.interval);
+      }, this._getFirstInterval());
+    }
+  }
+  private _getFirstInterval(): number {
+    return this.firstIntervalRatio * this.interval;
+  }
+  private _getKeyName(keyCode: number): string {
+     const keyName = _.findKey(KEY, (o) => {
+       return o === keyCode;
+     });
+     return keyName;
   }
   private _keyUp(e: KeyboardEvent) {
     e.preventDefault();
     e.stopPropagation();
     const {keyCode} = e;
-    switch (e.keyCode) {
-      case KEY.UP:
-      case KEY.DOWN:
-      case KEY.LEFT:
-      case KEY.RIGHT:
-      case KEY.SPACE:
-      case KEY.ENTER:
-        _.pull(this._pressedKeys, keyCode);
-        console.log(this._prettyPressedKeys());
-        break;
-      default:
-        break;
-    }
-  }
-  private _unListen() {
-    const keyDown = this._keyDown.bind(this);
-    const keyUp = this._keyUp.bind(this);
-    window.removeEventListener('keydown', keyDown);
-    window.removeEventListener('keyup', keyUp);
-  }
-  private _prettyPressedKeys(): string[] {
-    const ret: string[] = [];
-    _.forEach(this._pressedKeys, (keyCode) => {
-      switch (keyCode) {
-        case KEY.UP:
-          ret.push('↑');
-          break;
-        case KEY.DOWN:
-          ret.push('↓');
-          break;
-        case KEY.LEFT:
-          ret.push('←');
-          break;
-        case KEY.RIGHT:
-          ret.push('→');
-          break;
-        case KEY.SPACE:
-          ret.push('□');
-          break;
-        case KEY.ENTER:
-          ret.push('✓');
-          break;
-      }
-    });
-    return ret;
+    const keyName = this._getKeyName(keyCode);
+    clearInterval(this._intervaller[keyName]);
+    clearTimeout(this._intervaller[keyName]);
+    this._intervalFirst[keyName] = true;
   }
 }
