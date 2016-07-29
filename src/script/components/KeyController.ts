@@ -33,12 +33,12 @@ interface IIntervalFirst {
   [key: string]: boolean;
 }
 
-export default class KeyController<T extends HTMLElement> {
+export default class KeyController {
   private _intervaller: IIntervaller;
   private _intervalFirst: IIntervalFirst;
   private _enableKeys: number[];
   constructor(
-    private _dom: T | Window = window,
+    private _dom: HTMLCanvasElement | HTMLElement | Window = window,
     public onKeydown?: IKeyControllerMehtods,
     public interval: number = 100,
     public firstIntervalRatio: number = 3,

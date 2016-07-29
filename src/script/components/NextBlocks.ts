@@ -42,6 +42,27 @@ export default class NextBlocks extends createjs.Container {
     return ret;
   }
 
+  public hideBlocks() {
+    _.forEach(this._blockBoards, (b) => {
+      b.hideBlock();
+    });
+    return this;
+  }
+
+  public showBlocks() {
+    _.forEach(this._blockBoards, (b) => {
+      b.showBlock();
+    });
+    return this;
+  }
+
+  public refreshBlocks() {
+    _.forEach(this._blockBoards, (b) => {
+      b.changeRandom();
+    });
+    return this;
+  }
+
   private _init() {
     this._initBlockBoard();
     this._initTitle();
