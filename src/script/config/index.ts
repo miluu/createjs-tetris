@@ -1,7 +1,5 @@
 export default {
   CELL_WIDTH: 30,
   COLS_COUNT: 10,
-  ROWS_COUNT: 20,
-  BOARD_POSITION_X: 20,
-  BOARD_POSITION_Y: 20
+  ROWS_COUNT: 20
 };

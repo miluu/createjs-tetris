@@ -1,6 +1,6 @@
 /// <reference path="../../typings/index.d.ts" />
 
-import stage from './components/stage';
+import stage, {canvas} from './components/stage';
 import Board from './components/Board';
 import Block, {IBlockInfo} from './components/Block';
 import BlockBoard from './components/BlockBoard';
@@ -12,12 +12,12 @@ import config from './config';
 
 let activeBlockInfo: IBlockInfo = null;
 
-const board = new Board();
+const board = new Board(config.CELL_WIDTH);
 board.y = config.CELL_WIDTH;
 board.x = config.CELL_WIDTH * 4;
 stage.addChild(board);
 
-const activeBlock = new Block();
+const activeBlock = new Block(config.CELL_WIDTH);
 activeBlock.y = config.CELL_WIDTH;
 activeBlock.x = config.CELL_WIDTH * 7;
 activeBlock.on('click', () => {
@@ -39,7 +39,7 @@ holdBlock.x = holdBlock.y = config.CELL_WIDTH;
 stage.addChild(holdBlock);
 holdBlock.on('click', holdActiveBlock);
 
-const keyController = new KeyController();
+const keyController = new KeyController(canvas);
 keyController.onKeydown.up = () => {
   activeBlock.blockRotation++;
 };

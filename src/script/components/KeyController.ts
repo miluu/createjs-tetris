@@ -33,11 +33,12 @@ interface IIntervalFirst {
   [key: string]: boolean;
 }
 
-export default class KeyController {
+export default class KeyController<T extends HTMLElement> {
   private _intervaller: IIntervaller;
   private _intervalFirst: IIntervalFirst;
   private _enableKeys: number[];
   constructor(
+    private _dom: T | Window = window,
     public onKeydown?: IKeyControllerMehtods,
     public interval: number = 100,
     public firstIntervalRatio: number = 3,
@@ -72,9 +73,12 @@ export default class KeyController {
   disable() {
     this._enabled = false;
   }
+  toggle() {
+    this._enabled = !this._enabled;
+  }
   private _listen() {
-    window.addEventListener('keydown', this._keyDown.bind(this));
-    window.addEventListener('keyup', this._keyUp.bind(this));
+    this._dom.addEventListener('keydown', this._keyDown.bind(this));
+    this._dom.addEventListener('keyup', this._keyUp.bind(this));
   }
   private _keyDown(e: KeyboardEvent) {
     e.preventDefault();
