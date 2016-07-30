@@ -166,7 +166,16 @@
 	        var stageCanvas = this._options.stageCanvas;
 	        this._keyController = new KeyController_1.default(stageCanvas);
 	        this._keyController.onKeydown.down = function () {
-	            console.log('down');
+	            _this._board.moveBlock('down');
+	        };
+	        this._keyController.onKeydown.left = function () {
+	            _this._board.moveBlock('left');
+	        };
+	        this._keyController.onKeydown.right = function () {
+	            _this._board.moveBlock('right');
+	        };
+	        this._keyController.onKeydown.up = function () {
+	            _this._board.activeBlockRotation++;
 	        };
 	        this._keyController.onKeydown.enter = function () {
 	            _this.start();
@@ -238,19 +247,11 @@
 	        this._updateMapView();
 	    };
 	    Board.prototype.moveBlock = function (direction) {
-	        switch (direction) {
-	            case 'down':
-	                this._activeBlockPosition.row++;
-	                break;
-	            case 'left':
-	                this._activeBlockPosition.col--;
-	                break;
-	            case 'right':
-	                this._activeBlockPosition.col++;
-	                break;
-	            default:
-	                return;
+	        var _a = this._beforeMoveBlock(direction), canMove = _a.canMove, newPosition = _a.newPosition;
+	        if (!canMove) {
+	            return;
 	        }
+	        this._activeBlockPosition = newPosition;
 	        this._updateActiveBlockPosition();
 	    };
 	    Object.defineProperty(Board.prototype, "map", {
@@ -260,6 +261,16 @@
 	        set: function (map) {
 	            this._map = map;
 	            this._updateMapView();
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    Object.defineProperty(Board.prototype, "activeBlockRotation", {
+	        get: function () {
+	            return this._activeBlock.blockRotation;
+	        },
+	        set: function (blockRotation) {
+	            this._activeBlock.blockRotation = blockRotation;
 	        },
 	        enumerable: true,
 	        configurable: true
@@ -325,6 +336,45 @@
 	        var y = row * this._cellWidth;
 	        this._activeBlock.x = x;
 	        this._activeBlock.y = y;
+	    };
+	    Board.prototype._activeBlockToMapPostion = function (position, rotationShape) {
+	        if (position === void 0) { position = this._activeBlockPosition; }
+	        if (rotationShape === void 0) { rotationShape = this._activeBlock.getRotationShape(); }
+	        var ret = [];
+	        _.forEach(rotationShape, function (cellPos) {
+	            ret.push({
+	                col: position.col + cellPos.x,
+	                row: position.row + cellPos.y
+	            });
+	        });
+	        return ret;
+	    };
+	    Board.prototype._beforeMoveBlock = function (direction) {
+	        var _this = this;
+	        var canMove = true;
+	        var newPosition = _.assign({}, this._activeBlockPosition);
+	        switch (direction) {
+	            case 'down':
+	                newPosition.row++;
+	                break;
+	            case 'left':
+	                newPosition.col--;
+	                break;
+	            case 'right':
+	                newPosition.col++;
+	                break;
+	            default:
+	                break;
+	        }
+	        var newBlockMapPosition = this._activeBlockToMapPostion(newPosition);
+	        _.forEach(newBlockMapPosition, function (mapPos) {
+	            var col = mapPos.col, row = mapPos.row;
+	            if (_.get(_this.map, "[" + row + "][" + col + "]") === 1 || col < 0 || col > _this._colsCount - 1 || row > _this._rowsCount - 1) {
+	                canMove = false;
+	                return false;
+	            }
+	        });
+	        return { canMove: canMove, newPosition: newPosition };
 	    };
 	    return Board;
 	}(createjs.Container));

@@ -101,7 +101,16 @@ export default class Game extends createjs.Container {
     const {stageCanvas} = this._options;
     this._keyController = new KeyController(stageCanvas);
     this._keyController.onKeydown.down = () => {
-      console.log('down');
+      this._board.moveBlock('down');
+    };
+    this._keyController.onKeydown.left = () => {
+      this._board.moveBlock('left');
+    };
+    this._keyController.onKeydown.right = () => {
+      this._board.moveBlock('right');
+    };
+    this._keyController.onKeydown.up = () => {
+      this._board.activeBlockRotation++;
     };
     this._keyController.onKeydown.enter = () => {
       this.start();

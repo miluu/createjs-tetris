@@ -8,6 +8,7 @@ interface IMapPosition {
   row: number;
   col: number;
 }
+type TMoveDirection = 'left' | 'right' | 'down';
 export default class Board extends createjs.Container {
   private _bg: createjs.Shape;
   private _map: number[][];
@@ -63,20 +64,12 @@ export default class Board extends createjs.Container {
     this._updateMapView();
   }
 
-  public moveBlock(direction: 'left' | 'right' | 'down') {
-    switch (direction) {
-      case 'down':
-        this._activeBlockPosition.row++;
-        break;
-      case 'left':
-        this._activeBlockPosition.col--;
-        break;
-      case 'right':
-        this._activeBlockPosition.col++;
-        break;
-      default:
-        return;
+  public moveBlock(direction: TMoveDirection) {
+    const {canMove, newPosition} = this._beforeMoveBlock(direction);
+    if (!canMove) {
+      return;
     }
+    this._activeBlockPosition = newPosition;
     this._updateActiveBlockPosition();
   }
 
@@ -87,6 +80,14 @@ export default class Board extends createjs.Container {
     this._map = map;
     this._updateMapView();
   }
+
+  get activeBlockRotation() {
+    return this._activeBlock.blockRotation;
+  }
+  set activeBlockRotation(blockRotation: number) {
+    this._activeBlock.blockRotation = blockRotation;
+  }
+
   private _init(): void {
     this._initBg();
     this._initMap();
@@ -152,4 +153,43 @@ export default class Board extends createjs.Container {
     this._activeBlock.x = x;
     this._activeBlock.y = y;
   }
+
+  private _activeBlockToMapPostion(position = this._activeBlockPosition, rotationShape = this._activeBlock.getRotationShape()): IMapPosition[] {
+    const ret: IMapPosition[] = [];
+    _.forEach(rotationShape, (cellPos) => {
+      ret.push({
+        col: position.col + cellPos.x,
+        row: position.row + cellPos.y
+      });
+    });
+    return ret;
+  }
+
+  private _beforeMoveBlock(direction: TMoveDirection): {canMove: boolean, newPosition: IMapPosition} {
+    let canMove = true;
+    let newPosition: IMapPosition = _.assign({}, this._activeBlockPosition) as IMapPosition;
+    switch (direction) {
+      case 'down':
+        newPosition.row++;
+        break;
+      case 'left':
+        newPosition.col--;
+        break;
+      case 'right':
+        newPosition.col++;
+        break;
+      default:
+        break;
+    }
+    const newBlockMapPosition = this._activeBlockToMapPostion(newPosition);
+    _.forEach(newBlockMapPosition, (mapPos) => {
+      const {col, row} = mapPos;
+      if (_.get(this.map, `[${row}][${col}]`) === 1 || col < 0 || col > this._colsCount - 1 || row > this._rowsCount - 1) {
+        canMove = false;
+        return false;
+      }
+    });
+    return {canMove, newPosition};
+  }
+
 }
