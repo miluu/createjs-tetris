@@ -12,8 +12,7 @@ function initGame() {
   const game = new Game({
     cellWidth: config.CELL_WIDTH,
     colsCount: config.COLS_COUNT,
-    rowsCount: config.ROWS_COUNT,
-    stageCanvas: canvas
+    rowsCount: config.ROWS_COUNT
   });
   stage.addChild(game);
   stage.update();

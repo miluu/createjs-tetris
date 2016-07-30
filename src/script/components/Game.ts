@@ -95,6 +95,7 @@ export default class Game extends createjs.Container {
     const {cellWidth, colsCount, rowsCount} = this._options;
     this._board = new Board(cellWidth, colsCount, rowsCount);
     this.addChild(this._board);
+    (<any>window).board = this._board;
   }
   private _initKeyController() {
     const {stageCanvas} = this._options;
