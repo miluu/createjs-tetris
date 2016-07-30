@@ -1,6 +1,6 @@
 /// <reference path="../../typings/index.d.ts" />
 
-import Game from './components/Game';
+import Game from './classes/Game';
 import config from './config';
 
 initGame();

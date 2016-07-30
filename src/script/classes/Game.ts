@@ -29,6 +29,7 @@ export default class Game extends createjs.Container {
   private _nextBlocks: NextBlocks;
   private _board: Board;
   private _keyController: KeyController;
+  private _level: number;
   constructor(options?: IGameOptions) {
     super();
     const defaultOptions: IGameOptions = {
