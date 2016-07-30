@@ -270,7 +270,30 @@
 	            return this._activeBlock.blockRotation;
 	        },
 	        set: function (blockRotation) {
+	            var _this = this;
+	            var canMove = false;
+	            var blockPosition = this._activeBlockPosition;
+	            var col = blockPosition.col, row = blockPosition.row;
+	            var blockPositionSteps = [blockPosition];
+	            var newBlockPosition;
+	            blockPositionSteps.push(_.assign({}, blockPosition, { row: row - 1 }));
+	            blockPositionSteps.push(_.assign({}, blockPosition, { col: col - 1 }));
+	            blockPositionSteps.push(_.assign({}, blockPosition, { col: col + 1 }));
+	            blockPositionSteps.push(_.assign({}, blockPosition, { row: row - 2 }));
+	            blockPositionSteps.push(_.assign({}, blockPosition, { col: col - 2 }));
+	            blockPositionSteps.push(_.assign({}, blockPosition, { col: col + 2 }));
+	            _.forEach(blockPositionSteps, function (pos) {
+	                if (canMove = _this._canMoveTo(pos, blockRotation)) {
+	                    newBlockPosition = pos;
+	                    return false;
+	                }
+	            });
+	            if (!canMove) {
+	                return;
+	            }
 	            this._activeBlock.blockRotation = blockRotation;
+	            this._activeBlockPosition = newBlockPosition;
+	            this._updateActiveBlockPosition();
 	        },
 	        enumerable: true,
 	        configurable: true
@@ -279,12 +302,13 @@
 	        this._initBg();
 	        this._initMap();
 	        this._initCells();
-	        this._initActiveBoard();
+	        this._initActiveBlock();
 	        this._updateMapView();
 	    };
-	    Board.prototype._initActiveBoard = function () {
+	    Board.prototype._initActiveBlock = function () {
 	        this._activeBlock = new Block_1.default(this._cellWidth);
-	        this._activeBlockPosition = { col: 3, row: 0 };
+	        this._activeBlock.mask = this._bg;
+	        this._initActiveBlockPosition();
 	        this._updateActiveBlockPosition();
 	        this.addChild(this._activeBlock);
 	    };
@@ -330,6 +354,16 @@
 	            });
 	        });
 	    };
+	    Board.prototype._initActiveBlockPosition = function () {
+	        this._activeBlockPosition = { col: 0, row: 0 };
+	        var blockMapPosition = this._activeBlockToMapPostion();
+	        var minCol = _.minBy(blockMapPosition, 'col').col;
+	        var maxCol = _.maxBy(blockMapPosition, 'col').col;
+	        var maxRow = _.maxBy(blockMapPosition, 'row').row;
+	        var col = Math.ceil((this._colsCount - (maxCol - minCol + 1)) / 2) - minCol;
+	        var row = -(maxRow + 1);
+	        this._activeBlockPosition = { col: col, row: row };
+	    };
 	    Board.prototype._updateActiveBlockPosition = function () {
 	        var _a = this._activeBlockPosition, col = _a.col, row = _a.row;
 	        var x = col * this._cellWidth;
@@ -350,8 +384,6 @@
 	        return ret;
 	    };
 	    Board.prototype._beforeMoveBlock = function (direction) {
-	        var _this = this;
-	        var canMove = true;
 	        var newPosition = _.assign({}, this._activeBlockPosition);
 	        switch (direction) {
 	            case 'down':
@@ -366,15 +398,22 @@
 	            default:
 	                break;
 	        }
-	        var newBlockMapPosition = this._activeBlockToMapPostion(newPosition);
-	        _.forEach(newBlockMapPosition, function (mapPos) {
+	        var canMove = this._canMoveTo(newPosition);
+	        return { canMove: canMove, newPosition: newPosition };
+	    };
+	    Board.prototype._canMoveTo = function (position, blockRotation) {
+	        var _this = this;
+	        if (blockRotation === void 0) { blockRotation = this._activeBlock.blockRotation; }
+	        var canMove = true;
+	        var blockMapPosition = this._activeBlockToMapPostion(position, this._activeBlock.getRotationShape(blockRotation));
+	        _.forEach(blockMapPosition, function (mapPos) {
 	            var col = mapPos.col, row = mapPos.row;
 	            if (_.get(_this.map, "[" + row + "][" + col + "]") === 1 || col < 0 || col > _this._colsCount - 1 || row > _this._rowsCount - 1) {
 	                canMove = false;
 	                return false;
 	            }
 	        });
-	        return { canMove: canMove, newPosition: newPosition };
+	        return canMove;
 	    };
 	    return Board;
 	}(createjs.Container));
@@ -16888,10 +16927,11 @@
 	            blockRotation: this.blockRotation,
 	        };
 	    };
-	    Block.prototype.getRotationShape = function () {
+	    Block.prototype.getRotationShape = function (blockRotation) {
+	        if (blockRotation === void 0) { blockRotation = this._blockRotation; }
 	        var shape = this._getShape();
 	        var shapeBlockRotationCount = shape.length;
-	        var rotationShape = shape[this._blockRotation % shapeBlockRotationCount];
+	        var rotationShape = shape[blockRotation % shapeBlockRotationCount];
 	        return rotationShape;
 	    };
 	    Object.defineProperty(Block.prototype, "blockType", {

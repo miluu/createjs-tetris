@@ -56,10 +56,10 @@ export default class Block extends createjs.Container {
     };
   }
 
-  public getRotationShape(): IBlockCell[] {
+  public getRotationShape(blockRotation = this._blockRotation): IBlockCell[] {
     const shape = this._getShape();
     const shapeBlockRotationCount = shape.length;
-    const rotationShape = shape[this._blockRotation % shapeBlockRotationCount];
+    const rotationShape = shape[blockRotation % shapeBlockRotationCount];
     return rotationShape;
   }
 

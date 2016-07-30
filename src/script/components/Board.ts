@@ -85,20 +85,43 @@ export default class Board extends createjs.Container {
     return this._activeBlock.blockRotation;
   }
   set activeBlockRotation(blockRotation: number) {
+    let canMove = false;
+    let blockPosition = this._activeBlockPosition;
+    const {col, row} = blockPosition;
+    let blockPositionSteps = [blockPosition];
+    let newBlockPosition: IMapPosition;
+    blockPositionSteps.push(_.assign({}, blockPosition, {row: row - 1}) as IMapPosition);
+    blockPositionSteps.push(_.assign({}, blockPosition, {col: col - 1}) as IMapPosition);
+    blockPositionSteps.push(_.assign({}, blockPosition, {col: col + 1}) as IMapPosition);
+    blockPositionSteps.push(_.assign({}, blockPosition, {row: row - 2}) as IMapPosition);
+    blockPositionSteps.push(_.assign({}, blockPosition, {col: col - 2}) as IMapPosition);
+    blockPositionSteps.push(_.assign({}, blockPosition, {col: col + 2}) as IMapPosition);
+    _.forEach(blockPositionSteps, (pos) => {
+      if (canMove = this._canMoveTo(pos, blockRotation)) {
+        newBlockPosition = pos;
+        return false;
+      }
+    });
+    if (!canMove) {
+      return;
+    }
     this._activeBlock.blockRotation = blockRotation;
+    this._activeBlockPosition = newBlockPosition;
+    this._updateActiveBlockPosition();
   }
 
   private _init(): void {
     this._initBg();
     this._initMap();
     this._initCells();
-    this._initActiveBoard();
+    this._initActiveBlock();
     this._updateMapView();
   }
 
-  private _initActiveBoard() {
+  private _initActiveBlock() {
     this._activeBlock = new Block(this._cellWidth);
-    this._activeBlockPosition = {col: 3, row: 0};
+    this._activeBlock.mask = this._bg;
+    this._initActiveBlockPosition();
     this._updateActiveBlockPosition();
     this.addChild(this._activeBlock);
   }
@@ -146,6 +169,17 @@ export default class Board extends createjs.Container {
     });
   }
 
+  private _initActiveBlockPosition(): void {
+    this._activeBlockPosition = {col: 0, row: 0};
+    const blockMapPosition = this._activeBlockToMapPostion();
+    const minCol = _.minBy(blockMapPosition, 'col').col;
+    const maxCol = _.maxBy(blockMapPosition, 'col').col;
+    const maxRow = _.maxBy(blockMapPosition, 'row').row;
+    const col = Math.ceil((this._colsCount - (maxCol - minCol + 1)) / 2) - minCol;
+    const row = -(maxRow + 1);
+    this._activeBlockPosition = {col, row};
+  }
+
   private _updateActiveBlockPosition(): void {
     const {col, row} = this._activeBlockPosition;
     const x = col * this._cellWidth;
@@ -166,7 +200,6 @@ export default class Board extends createjs.Container {
   }
 
   private _beforeMoveBlock(direction: TMoveDirection): {canMove: boolean, newPosition: IMapPosition} {
-    let canMove = true;
     let newPosition: IMapPosition = _.assign({}, this._activeBlockPosition) as IMapPosition;
     switch (direction) {
       case 'down':
@@ -181,15 +214,19 @@ export default class Board extends createjs.Container {
       default:
         break;
     }
-    const newBlockMapPosition = this._activeBlockToMapPostion(newPosition);
-    _.forEach(newBlockMapPosition, (mapPos) => {
+    const canMove = this._canMoveTo(newPosition);
+    return {canMove, newPosition};
+  }
+  private _canMoveTo(position: IMapPosition, blockRotation: number = this._activeBlock.blockRotation): boolean {
+    let canMove = true;
+    const blockMapPosition = this._activeBlockToMapPostion(position, this._activeBlock.getRotationShape(blockRotation));
+    _.forEach(blockMapPosition, (mapPos) => {
       const {col, row} = mapPos;
       if (_.get(this.map, `[${row}][${col}]`) === 1 || col < 0 || col > this._colsCount - 1 || row > this._rowsCount - 1) {
         canMove = false;
         return false;
       }
     });
-    return {canMove, newPosition};
+    return canMove;
   }
-
 }
