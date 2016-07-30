@@ -9,6 +9,10 @@ interface IMapPosition {
   col: number;
 }
 type TMoveDirection = 'left' | 'right' | 'down';
+const activeBlockFilter = [
+  new createjs.ColorFilter(0, 0, 0, 1, 44, 72, 111, 0)
+];
+
 export default class Board extends createjs.Container {
   private _bg: createjs.Shape;
   private _map: number[][];
@@ -32,8 +36,7 @@ export default class Board extends createjs.Container {
   }
 
   public resetActiveBlockPos() {
-    const rotationShape = this._activeBlock.getRotationShape();
-    console.log(rotationShape);
+    this._initActiveBlockPosition();
   }
 
   public showActiveBlock() {
@@ -64,13 +67,14 @@ export default class Board extends createjs.Container {
     this._updateMapView();
   }
 
-  public moveBlock(direction: TMoveDirection) {
+  public moveBlock(direction: TMoveDirection): boolean {
     const {canMove, newPosition} = this._beforeMoveBlock(direction);
     if (!canMove) {
-      return;
+      return false;
     }
     this._activeBlockPosition = newPosition;
     this._updateActiveBlockPosition();
+    return true;
   }
 
   get map(): number[][] {
@@ -123,7 +127,15 @@ export default class Board extends createjs.Container {
     this._activeBlock.mask = this._bg;
     this._initActiveBlockPosition();
     this._updateActiveBlockPosition();
+    this._setActiveBlockFilter();
     this.addChild(this._activeBlock);
+  }
+
+  private _setActiveBlockFilter() {
+    _.forEach(this._activeBlock.cells, (cell) => {
+      cell.filters = activeBlockFilter;
+      cell.cache(0, 0, this._cellWidth, this._cellWidth);
+    });
   }
 
   private _initBg(): void {
@@ -164,7 +176,7 @@ export default class Board extends createjs.Container {
         const cell = this._cells[row][col];
         cell.alpha = cellState === 0
           ? 0.1
-          : 0.8;
+          : 1;
       });
     });
   }

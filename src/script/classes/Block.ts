@@ -16,7 +16,7 @@ export interface IBlockInfo {
 export default class Block extends createjs.Container {
   private _blockRotation: number;
   private _blockType: string;
-  private _cells: Cell[];
+  public cells: Cell[];
 
   constructor(
     private _cellWidth: number = 30,
@@ -75,7 +75,7 @@ export default class Block extends createjs.Container {
     return this._blockRotation;
   };
   set blockRotation(blockRotation: number) {
-    if (!this._cells) {
+    if (!this.cells) {
       this._buildCells();
     }
     blockRotation = Math.floor(Math.abs(blockRotation)) % 4;
@@ -90,14 +90,14 @@ export default class Block extends createjs.Container {
       cells.push(cell);
       this.addChild(cell);
     });
-    this._cells = cells;
+    this.cells = cells;
   }
 
   private _update() {
     const rotationShape = this.getRotationShape();
     _.forEach(rotationShape, (cellPos, i) => {
-      this._cells[i].x = this._cellWidth * cellPos.x;
-      this._cells[i].y = this._cellWidth * cellPos.y;
+      this.cells[i].x = this._cellWidth * cellPos.x;
+      this.cells[i].y = this._cellWidth * cellPos.y;
     });
   }
 

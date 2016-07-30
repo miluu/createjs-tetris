@@ -9,6 +9,8 @@ function initGame() {
   const canvas = document.getElementById('canvas') as HTMLCanvasElement;
   const stage = new createjs.Stage(canvas);
   const Ticker = createjs.Ticker;
+  Ticker.timingMode = Ticker.RAF;
+  Ticker.setFPS(60);
   const game = new Game({
     cellWidth: config.CELL_WIDTH,
     colsCount: config.COLS_COUNT,

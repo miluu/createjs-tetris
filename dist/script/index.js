@@ -60,6 +60,8 @@
 	    var canvas = document.getElementById('canvas');
 	    var stage = new createjs.Stage(canvas);
 	    var Ticker = createjs.Ticker;
+	    Ticker.timingMode = Ticker.RAF;
+	    Ticker.setFPS(60);
 	    var game = new Game_1.default({
 	        cellWidth: config_1.default.CELL_WIDTH,
 	        colsCount: config_1.default.COLS_COUNT,
@@ -91,6 +93,7 @@
 	var NextBlocks_1 = __webpack_require__(11);
 	var KeyController_1 = __webpack_require__(12);
 	var _ = __webpack_require__(4);
+	var levelsStepInterval = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100];
 	var Game = (function (_super) {
 	    __extends(Game, _super);
 	    function Game(options) {
@@ -104,6 +107,10 @@
 	        };
 	        this._options = _.assign({}, defaultOptions, options);
 	        var cellWidth = this._options.cellWidth;
+	        this._fps = createjs.Ticker.getFPS();
+	        this.level = 0;
+	        this._setLevelFrames();
+	        this._levelStepsCount = 0;
 	        this._initHoldBoard();
 	        this._initNextBlocks();
 	        this._initBoard();
@@ -123,11 +130,13 @@
 	            x: cellWidth * 15,
 	            y: cellWidth
 	        });
+	        this.start();
 	    }
 	    Game.prototype.start = function () {
 	        this._nextBlocks
 	            .refreshBlocks()
 	            .showBlocks();
+	        this._autoFall();
 	    };
 	    Game.prototype.setHoldBoard = function (options) {
 	        this._holdBlock.x = options.x;
@@ -166,7 +175,11 @@
 	        var stageCanvas = this._options.stageCanvas;
 	        this._keyController = new KeyController_1.default(stageCanvas);
 	        this._keyController.onKeydown.down = function () {
-	            _this._board.moveBlock('down');
+	            var canMove = _this._board.moveBlock('down');
+	            if (!canMove) {
+	                _this._nextRound();
+	            }
+	            _this._levelStepsCount = 0;
 	        };
 	        this._keyController.onKeydown.left = function () {
 	            _this._board.moveBlock('left');
@@ -180,6 +193,35 @@
 	        this._keyController.onKeydown.enter = function () {
 	            _this.start();
 	        };
+	    };
+	    Game.prototype._getLevelFrames = function (level) {
+	        return this._levelFrames[level] || _.last(this._levelFrames);
+	    };
+	    Game.prototype._setLevelFrames = function () {
+	        var _this = this;
+	        this._levelFrames = [];
+	        _.forEach(levelsStepInterval, function (stepInterval) {
+	            var frames = Math.round(stepInterval * _this._fps / 1000);
+	            _this._levelFrames.push(frames);
+	        });
+	    };
+	    Game.prototype._autoFall = function () {
+	        createjs.Ticker.off('tick', this._tickerListener);
+	        this._tickerListener = createjs.Ticker.on('tick', this._stepsCount.bind(this));
+	    };
+	    Game.prototype._stepsCount = function () {
+	        this._levelStepsCount++;
+	        if (this._levelStepsCount >= this._getLevelFrames(this.level)) {
+	            this._levelStepsCount = 0;
+	            var canMove = this._board.moveBlock('down');
+	            if (!canMove) {
+	                this._nextRound();
+	            }
+	        }
+	    };
+	    Game.prototype._nextRound = function () {
+	        this._board.resetActiveBlock(this._nextBlocks.next());
+	        this._board.resetActiveBlockPos();
 	    };
 	    return Game;
 	}(createjs.Container));
@@ -201,6 +243,9 @@
 	var _ = __webpack_require__(4);
 	var Cell_1 = __webpack_require__(6);
 	var Block_1 = __webpack_require__(7);
+	var activeBlockFilter = [
+	    new createjs.ColorFilter(0, 0, 0, 1, 44, 72, 111, 0)
+	];
 	var Board = (function (_super) {
 	    __extends(Board, _super);
 	    function Board(_cellWidth, _colsCount, _rowsCount) {
@@ -220,8 +265,7 @@
 	        this.showActiveBlock();
 	    };
 	    Board.prototype.resetActiveBlockPos = function () {
-	        var rotationShape = this._activeBlock.getRotationShape();
-	        console.log(rotationShape);
+	        this._initActiveBlockPosition();
 	    };
 	    Board.prototype.showActiveBlock = function () {
 	        this._activeBlock.visible = true;
@@ -249,10 +293,11 @@
 	    Board.prototype.moveBlock = function (direction) {
 	        var _a = this._beforeMoveBlock(direction), canMove = _a.canMove, newPosition = _a.newPosition;
 	        if (!canMove) {
-	            return;
+	            return false;
 	        }
 	        this._activeBlockPosition = newPosition;
 	        this._updateActiveBlockPosition();
+	        return true;
 	    };
 	    Object.defineProperty(Board.prototype, "map", {
 	        get: function () {
@@ -310,7 +355,15 @@
 	        this._activeBlock.mask = this._bg;
 	        this._initActiveBlockPosition();
 	        this._updateActiveBlockPosition();
+	        this._setActiveBlockFilter();
 	        this.addChild(this._activeBlock);
+	    };
+	    Board.prototype._setActiveBlockFilter = function () {
+	        var _this = this;
+	        _.forEach(this._activeBlock.cells, function (cell) {
+	            cell.filters = activeBlockFilter;
+	            cell.cache(0, 0, _this._cellWidth, _this._cellWidth);
+	        });
 	    };
 	    Board.prototype._initBg = function () {
 	        this._bg = new createjs.Shape();
@@ -350,7 +403,7 @@
 	                var cell = _this._cells[row][col];
 	                cell.alpha = cellState === 0
 	                    ? 0.1
-	                    : 0.8;
+	                    : 1;
 	            });
 	        });
 	    };
@@ -16950,7 +17003,7 @@
 	            return this._blockRotation;
 	        },
 	        set: function (blockRotation) {
-	            if (!this._cells) {
+	            if (!this.cells) {
 	                this._buildCells();
 	            }
 	            blockRotation = Math.floor(Math.abs(blockRotation)) % 4;
@@ -16969,14 +17022,14 @@
 	            cells.push(cell);
 	            _this.addChild(cell);
 	        });
-	        this._cells = cells;
+	        this.cells = cells;
 	    };
 	    Block.prototype._update = function () {
 	        var _this = this;
 	        var rotationShape = this.getRotationShape();
 	        _.forEach(rotationShape, function (cellPos, i) {
-	            _this._cells[i].x = _this._cellWidth * cellPos.x;
-	            _this._cells[i].y = _this._cellWidth * cellPos.y;
+	            _this.cells[i].x = _this._cellWidth * cellPos.x;
+	            _this.cells[i].y = _this._cellWidth * cellPos.y;
 	        });
 	    };
 	    Block.randomType = function () {

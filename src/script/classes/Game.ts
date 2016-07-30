@@ -23,13 +23,24 @@ interface IPosition {
   y: number;
 }
 
+interface ILevel {
+  level: number;
+  stepInterval: number;
+}
+
+const levelsStepInterval: number[] = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100];
+
 export default class Game extends createjs.Container {
+  public level: number;
   private _options: IGameOptions;
   private _holdBlock: HoldBlock;
   private _nextBlocks: NextBlocks;
   private _board: Board;
   private _keyController: KeyController;
-  private _level: number;
+  private _fps: number;
+  private _levelStepsCount: number;
+  private _levelFrames: number[];
+  private _tickerListener: Function;
   constructor(options?: IGameOptions) {
     super();
     const defaultOptions: IGameOptions = {
@@ -41,6 +52,10 @@ export default class Game extends createjs.Container {
     };
     this._options = _.assign({}, defaultOptions, options);
     const {cellWidth} = this._options;
+    this._fps = createjs.Ticker.getFPS();
+    this.level = 0;
+    this._setLevelFrames();
+    this._levelStepsCount = 0;
     this._initHoldBoard();
     this._initNextBlocks();
     this._initBoard();
@@ -60,11 +75,13 @@ export default class Game extends createjs.Container {
       x: cellWidth * 15,
       y: cellWidth
     });
+    this.start();
   }
   public start() {
     this._nextBlocks
       .refreshBlocks()
       .showBlocks();
+    this._autoFall();
   }
   public setHoldBoard(options: IScale & IPosition) {
     this._holdBlock.x = options.x;
@@ -102,7 +119,11 @@ export default class Game extends createjs.Container {
     const {stageCanvas} = this._options;
     this._keyController = new KeyController(stageCanvas);
     this._keyController.onKeydown.down = () => {
-      this._board.moveBlock('down');
+      const canMove = this._board.moveBlock('down');
+      if (!canMove) {
+        this._nextRound();
+      }
+      this._levelStepsCount = 0;
     };
     this._keyController.onKeydown.left = () => {
       this._board.moveBlock('left');
@@ -116,5 +137,33 @@ export default class Game extends createjs.Container {
     this._keyController.onKeydown.enter = () => {
       this.start();
     };
+  }
+  private _getLevelFrames(level: number) {
+    return this._levelFrames[level] || _.last(this._levelFrames);
+  }
+  private _setLevelFrames() {
+    this._levelFrames = [];
+    _.forEach(levelsStepInterval, (stepInterval) => {
+      const frames = Math.round(stepInterval * this._fps / 1000);
+      this._levelFrames.push(frames);
+    });
+  }
+  private _autoFall() {
+    createjs.Ticker.off('tick', this._tickerListener);
+    this._tickerListener = createjs.Ticker.on('tick', this._stepsCount.bind(this));
+  }
+  private _stepsCount() {
+    this._levelStepsCount++;
+    if (this._levelStepsCount >= this._getLevelFrames(this.level)) {
+      this._levelStepsCount = 0;
+      const canMove = this._board.moveBlock('down');
+      if (!canMove) {
+        this._nextRound();
+      }
+    }
+  }
+  private _nextRound() {
+    this._board.resetActiveBlock(this._nextBlocks.next());
+    this._board.resetActiveBlockPos();
   }
 }
