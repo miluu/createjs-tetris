@@ -41,6 +41,9 @@ export default class Game extends createjs.Container {
   private _levelStepsCount: number;
   private _levelFrames: number[];
   private _tickerListener: Function;
+  private _isStarted: boolean;
+  private _isHolded: boolean;
+  private _isPause: boolean;
   constructor(options?: IGameOptions) {
     super();
     const defaultOptions: IGameOptions = {
@@ -55,11 +58,11 @@ export default class Game extends createjs.Container {
     this._fps = createjs.Ticker.getFPS();
     this.level = 0;
     this._setLevelFrames();
-    this._levelStepsCount = 0;
     this._initHoldBoard();
     this._initNextBlocks();
     this._initBoard();
     this._initKeyController();
+    this._initGameStatus();
     this.setHoldBoard({
       scale: 0.5,
       x: cellWidth,
@@ -75,9 +78,12 @@ export default class Game extends createjs.Container {
       x: cellWidth * 15,
       y: cellWidth
     });
-    this.start();
   }
   public start() {
+    this._initGameStatus();
+    this._board.clear();
+    this._keyController.clearKeyDown();
+    this._isStarted = true;
     this._nextBlocks
       .refreshBlocks()
       .showBlocks();
@@ -119,6 +125,10 @@ export default class Game extends createjs.Container {
     const {stageCanvas} = this._options;
     this._keyController = new KeyController(stageCanvas);
     this._keyController.onKeydown.down = () => {
+      console.log('key: down');
+      if (!this._isStarted || this._isPause) {
+        return;
+      }
       const canMove = this._board.moveBlock('down');
       if (!canMove) {
         this._nextRound();
@@ -126,16 +136,44 @@ export default class Game extends createjs.Container {
       this._levelStepsCount = 0;
     };
     this._keyController.onKeydown.left = () => {
+      console.log('key: left');
+      if (!this._isStarted || this._isPause) {
+        return;
+      }
       this._board.moveBlock('left');
     };
     this._keyController.onKeydown.right = () => {
+      console.log('key: right');
+      if (!this._isStarted || this._isPause) {
+        return;
+      }
       this._board.moveBlock('right');
     };
     this._keyController.onKeydown.up = () => {
+      console.log('key: up');
+      if (!this._isStarted || this._isPause) {
+        return;
+      }
       this._board.activeBlockRotation++;
     };
+    this._keyController.onKeydown.z = () => {
+      console.log('key: z');
+      if (!this._isStarted || this._isPause || this._isHolded) {
+        return;
+      }
+      this._hold();
+    };
     this._keyController.onKeydown.enter = () => {
-      this.start();
+      if (!this._isStarted) {
+        this.start();
+      } else {
+        this._isPause = !this._isPause;
+        if (this._isPause) {
+          this._stopAutoFall();
+        } else {
+          this._autoFall();
+        }
+      }
     };
   }
   private _getLevelFrames(level: number) {
@@ -152,6 +190,9 @@ export default class Game extends createjs.Container {
     createjs.Ticker.off('tick', this._tickerListener);
     this._tickerListener = createjs.Ticker.on('tick', this._stepsCount.bind(this));
   }
+  private _stopAutoFall() {
+    createjs.Ticker.off('tick', this._tickerListener);
+  }
   private _stepsCount() {
     this._levelStepsCount++;
     if (this._levelStepsCount >= this._getLevelFrames(this.level)) {
@@ -163,7 +204,37 @@ export default class Game extends createjs.Container {
     }
   }
   private _nextRound() {
+    const outRangeCellsPos = this._board.blockToMap();
+    this._board.clearFullRow();
+    if (outRangeCellsPos.length) {
+      this._gameOver();
+      return;
+    }
+    this._isHolded = false;
     this._board.resetActiveBlock(this._nextBlocks.next());
     this._board.resetActiveBlockPos();
+  }
+  private _gameOver() {
+    alert('Game Over!');
+    this._keyController.clearKeyDown();
+    this._initGameStatus();
+  }
+  private _initGameStatus() {
+    this._isStarted = false;
+    this._isPause = false;
+    this._isHolded = false;
+    this._levelStepsCount = 0;
+    this._stopAutoFall();
+  }
+  private _hold() {
+    this._isHolded = true;
+    const holdBlockInfo = this._holdBlock.hold(this._board.getActiveBlockInfo());
+    if (holdBlockInfo) {
+      this._board.resetActiveBlock(holdBlockInfo);
+      this._board.resetActiveBlockPos();
+    } else {
+      this._board.resetActiveBlock(this._nextBlocks.next());
+      this._board.resetActiveBlockPos();
+    }
   }
 }

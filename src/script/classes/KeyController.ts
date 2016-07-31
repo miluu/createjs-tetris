@@ -40,7 +40,7 @@ export default class KeyController {
   constructor(
     private _dom: HTMLCanvasElement | HTMLElement | Window = window,
     public onKeydown?: IKeyControllerMehtods,
-    public interval: number = 100,
+    public interval: number = 50,
     public firstIntervalRatio: number = 3,
     private _enabled: boolean = true
   ) {
@@ -75,6 +75,12 @@ export default class KeyController {
   }
   toggle() {
     this._enabled = !this._enabled;
+  }
+  clearKeyDown() {
+    _.forIn(KEY, (keyCode, keyName) => {
+      clearInterval(this._intervaller[keyName]);
+      clearTimeout(this._intervaller[keyName]);
+    });
   }
   private _listen() {
     this._dom.addEventListener('keydown', this._keyDown.bind(this));

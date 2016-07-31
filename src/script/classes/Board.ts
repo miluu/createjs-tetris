@@ -77,6 +77,63 @@ export default class Board extends createjs.Container {
     return true;
   }
 
+  public blockToMap(blockInfo: IBlockInfo = this._activeBlock.getBlockInfo(), blockPosition: IMapPosition = this._activeBlockPosition): IMapPosition[] {
+    const outRangeCellPos: IMapPosition[] = [];
+    const blockCellsMapPosition = this._activeBlockToMapPostion(blockPosition);
+    _.forEach(blockCellsMapPosition, (pos) => {
+      console.log(pos);
+      if (this.isInRange(pos)) {
+        this.setMap(pos, 1);
+      } else {
+        outRangeCellPos.push(pos);
+      }
+    });
+    return outRangeCellPos;
+  }
+
+  public isInRange(mapPosition: IMapPosition): boolean {
+    const {col, row} = mapPosition;
+    if (col >= 0 && col <= this._colsCount - 1 && row >= 0 && row <= this._rowsCount - 1) {
+      return true;
+    }
+    return false;
+  }
+
+  public clearFullRow() {
+    let map = this._map;
+    let fullRowIndex: number[] = [];
+    for (let row = this._rowsCount - 1; row >= 0; row--) {
+      let mapCol = map[row];
+      if (_.includes(mapCol, 0)) {
+        continue;
+      }
+      fullRowIndex.push(row);
+    }
+    if (!fullRowIndex.length) {
+      return;
+    }
+    _.pullAt(map, fullRowIndex);
+    const emptyRow: number[] = new Array(this._colsCount);
+    _.fill(emptyRow, 0);
+    _.times(fullRowIndex.length, () => {
+      map.unshift(emptyRow.concat());
+    });
+    this.map = map;
+  }
+
+  public clear() {
+    this._initMap();
+    this._updateMapView();
+    this._activeBlock.blockType = Block.randomType();
+    this._activeBlock.blockRotation = Block.randomRotation();
+    this._initActiveBlockPosition();
+    this._updateActiveBlockPosition();
+  }
+
+  public getActiveBlockInfo(): IBlockInfo {
+    return this._activeBlock.getBlockInfo();
+  }
+
   get map(): number[][] {
     return this._map;
   }
@@ -190,6 +247,7 @@ export default class Board extends createjs.Container {
     const col = Math.ceil((this._colsCount - (maxCol - minCol + 1)) / 2) - minCol;
     const row = -(maxRow + 1);
     this._activeBlockPosition = {col, row};
+    this._updateActiveBlockPosition();
   }
 
   private _updateActiveBlockPosition(): void {

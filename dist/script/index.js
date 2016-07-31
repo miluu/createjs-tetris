@@ -110,11 +110,11 @@
 	        this._fps = createjs.Ticker.getFPS();
 	        this.level = 0;
 	        this._setLevelFrames();
-	        this._levelStepsCount = 0;
 	        this._initHoldBoard();
 	        this._initNextBlocks();
 	        this._initBoard();
 	        this._initKeyController();
+	        this._initGameStatus();
 	        this.setHoldBoard({
 	            scale: 0.5,
 	            x: cellWidth,
@@ -130,9 +130,12 @@
 	            x: cellWidth * 15,
 	            y: cellWidth
 	        });
-	        this.start();
 	    }
 	    Game.prototype.start = function () {
+	        this._initGameStatus();
+	        this._board.clear();
+	        this._keyController.clearKeyDown();
+	        this._isStarted = true;
 	        this._nextBlocks
 	            .refreshBlocks()
 	            .showBlocks();
@@ -175,6 +178,10 @@
 	        var stageCanvas = this._options.stageCanvas;
 	        this._keyController = new KeyController_1.default(stageCanvas);
 	        this._keyController.onKeydown.down = function () {
+	            console.log('key: down');
+	            if (!_this._isStarted || _this._isPause) {
+	                return;
+	            }
 	            var canMove = _this._board.moveBlock('down');
 	            if (!canMove) {
 	                _this._nextRound();
@@ -182,16 +189,46 @@
 	            _this._levelStepsCount = 0;
 	        };
 	        this._keyController.onKeydown.left = function () {
+	            console.log('key: left');
+	            if (!_this._isStarted || _this._isPause) {
+	                return;
+	            }
 	            _this._board.moveBlock('left');
 	        };
 	        this._keyController.onKeydown.right = function () {
+	            console.log('key: right');
+	            if (!_this._isStarted || _this._isPause) {
+	                return;
+	            }
 	            _this._board.moveBlock('right');
 	        };
 	        this._keyController.onKeydown.up = function () {
+	            console.log('key: up');
+	            if (!_this._isStarted || _this._isPause) {
+	                return;
+	            }
 	            _this._board.activeBlockRotation++;
 	        };
+	        this._keyController.onKeydown.z = function () {
+	            console.log('key: z');
+	            if (!_this._isStarted || _this._isPause || _this._isHolded) {
+	                return;
+	            }
+	            _this._hold();
+	        };
 	        this._keyController.onKeydown.enter = function () {
-	            _this.start();
+	            if (!_this._isStarted) {
+	                _this.start();
+	            }
+	            else {
+	                _this._isPause = !_this._isPause;
+	                if (_this._isPause) {
+	                    _this._stopAutoFall();
+	                }
+	                else {
+	                    _this._autoFall();
+	                }
+	            }
 	        };
 	    };
 	    Game.prototype._getLevelFrames = function (level) {
@@ -209,6 +246,9 @@
 	        createjs.Ticker.off('tick', this._tickerListener);
 	        this._tickerListener = createjs.Ticker.on('tick', this._stepsCount.bind(this));
 	    };
+	    Game.prototype._stopAutoFall = function () {
+	        createjs.Ticker.off('tick', this._tickerListener);
+	    };
 	    Game.prototype._stepsCount = function () {
 	        this._levelStepsCount++;
 	        if (this._levelStepsCount >= this._getLevelFrames(this.level)) {
@@ -220,8 +260,39 @@
 	        }
 	    };
 	    Game.prototype._nextRound = function () {
+	        var outRangeCellsPos = this._board.blockToMap();
+	        this._board.clearFullRow();
+	        if (outRangeCellsPos.length) {
+	            this._gameOver();
+	            return;
+	        }
+	        this._isHolded = false;
 	        this._board.resetActiveBlock(this._nextBlocks.next());
 	        this._board.resetActiveBlockPos();
+	    };
+	    Game.prototype._gameOver = function () {
+	        alert('Game Over!');
+	        this._keyController.clearKeyDown();
+	        this._initGameStatus();
+	    };
+	    Game.prototype._initGameStatus = function () {
+	        this._isStarted = false;
+	        this._isPause = false;
+	        this._isHolded = false;
+	        this._levelStepsCount = 0;
+	        this._stopAutoFall();
+	    };
+	    Game.prototype._hold = function () {
+	        this._isHolded = true;
+	        var holdBlockInfo = this._holdBlock.hold(this._board.getActiveBlockInfo());
+	        if (holdBlockInfo) {
+	            this._board.resetActiveBlock(holdBlockInfo);
+	            this._board.resetActiveBlockPos();
+	        }
+	        else {
+	            this._board.resetActiveBlock(this._nextBlocks.next());
+	            this._board.resetActiveBlockPos();
+	        }
 	    };
 	    return Game;
 	}(createjs.Container));
@@ -298,6 +369,62 @@
 	        this._activeBlockPosition = newPosition;
 	        this._updateActiveBlockPosition();
 	        return true;
+	    };
+	    Board.prototype.blockToMap = function (blockInfo, blockPosition) {
+	        var _this = this;
+	        if (blockInfo === void 0) { blockInfo = this._activeBlock.getBlockInfo(); }
+	        if (blockPosition === void 0) { blockPosition = this._activeBlockPosition; }
+	        var outRangeCellPos = [];
+	        var blockCellsMapPosition = this._activeBlockToMapPostion(blockPosition);
+	        _.forEach(blockCellsMapPosition, function (pos) {
+	            console.log(pos);
+	            if (_this.isInRange(pos)) {
+	                _this.setMap(pos, 1);
+	            }
+	            else {
+	                outRangeCellPos.push(pos);
+	            }
+	        });
+	        return outRangeCellPos;
+	    };
+	    Board.prototype.isInRange = function (mapPosition) {
+	        var col = mapPosition.col, row = mapPosition.row;
+	        if (col >= 0 && col <= this._colsCount - 1 && row >= 0 && row <= this._rowsCount - 1) {
+	            return true;
+	        }
+	        return false;
+	    };
+	    Board.prototype.clearFullRow = function () {
+	        var map = this._map;
+	        var fullRowIndex = [];
+	        for (var row = this._rowsCount - 1; row >= 0; row--) {
+	            var mapCol = map[row];
+	            if (_.includes(mapCol, 0)) {
+	                continue;
+	            }
+	            fullRowIndex.push(row);
+	        }
+	        if (!fullRowIndex.length) {
+	            return;
+	        }
+	        _.pullAt(map, fullRowIndex);
+	        var emptyRow = new Array(this._colsCount);
+	        _.fill(emptyRow, 0);
+	        _.times(fullRowIndex.length, function () {
+	            map.unshift(emptyRow.concat());
+	        });
+	        this.map = map;
+	    };
+	    Board.prototype.clear = function () {
+	        this._initMap();
+	        this._updateMapView();
+	        this._activeBlock.blockType = Block_1.default.randomType();
+	        this._activeBlock.blockRotation = Block_1.default.randomRotation();
+	        this._initActiveBlockPosition();
+	        this._updateActiveBlockPosition();
+	    };
+	    Board.prototype.getActiveBlockInfo = function () {
+	        return this._activeBlock.getBlockInfo();
 	    };
 	    Object.defineProperty(Board.prototype, "map", {
 	        get: function () {
@@ -416,6 +543,7 @@
 	        var col = Math.ceil((this._colsCount - (maxCol - minCol + 1)) / 2) - minCol;
 	        var row = -(maxRow + 1);
 	        this._activeBlockPosition = { col: col, row: row };
+	        this._updateActiveBlockPosition();
 	    };
 	    Board.prototype._updateActiveBlockPosition = function () {
 	        var _a = this._activeBlockPosition, col = _a.col, row = _a.row;
@@ -17390,7 +17518,7 @@
 	    function KeyController(_dom, onKeydown, interval, firstIntervalRatio, _enabled) {
 	        var _this = this;
 	        if (_dom === void 0) { _dom = window; }
-	        if (interval === void 0) { interval = 100; }
+	        if (interval === void 0) { interval = 50; }
 	        if (firstIntervalRatio === void 0) { firstIntervalRatio = 3; }
 	        if (_enabled === void 0) { _enabled = true; }
 	        this._dom = _dom;
@@ -17433,6 +17561,13 @@
 	    };
 	    KeyController.prototype.toggle = function () {
 	        this._enabled = !this._enabled;
+	    };
+	    KeyController.prototype.clearKeyDown = function () {
+	        var _this = this;
+	        _.forIn(exports.KEY, function (keyCode, keyName) {
+	            clearInterval(_this._intervaller[keyName]);
+	            clearTimeout(_this._intervaller[keyName]);
+	        });
 	    };
 	    KeyController.prototype._listen = function () {
 	        this._dom.addEventListener('keydown', this._keyDown.bind(this));
