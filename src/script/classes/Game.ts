@@ -106,6 +106,9 @@ export default class Game extends createjs.Container {
     this._board.clear();
     this._keyController.clearKeyDown();
     this._isStarted = true;
+    this.level = 0;
+    this._infoPanel.score = 0;
+    this._infoPanel.rows = 0;
     this._nextBlocks
       .refreshBlocks()
       .showBlocks();
@@ -174,6 +177,8 @@ export default class Game extends createjs.Container {
   }
   private _initInfoPanel() {
     this._infoPanel = new InfoPanel(this._options.cellWidth / 2);
+    this._infoPanel.x = this._options.cellWidth;
+    this._infoPanel.y = (this._options.rowsCount - 6) * this._options.cellWidth;
     this.addChild(this._infoPanel);
   }
   private _initKeyController() {
@@ -284,9 +289,9 @@ export default class Game extends createjs.Container {
         this._record.clearRowCount += rows.length;
         this._record.clearCountByRows[rows.length - 1]++;
         this._record.score += this._clearRowsScore[rows.length - 1];
-        console.log(this._record.score);
+        this._infoPanel.rows = this._record.clearRowCount;
+        this._infoPanel.score = this._record.score;
         if (this._record.clearRowCount >= (this.level + 1) * 30) {
-          console.log('level up!');
           this.level++;
         }
       }
