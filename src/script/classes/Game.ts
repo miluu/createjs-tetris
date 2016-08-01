@@ -4,6 +4,7 @@ import Board from './Board';
 import Block from './Block';
 import HoldBlock from './HoldBlock';
 import NextBlocks from './NextBlocks';
+import InfoPanel from './InfoPanel';
 import KeyController from './KeyController';
 import * as _ from 'lodash';
 
@@ -45,10 +46,12 @@ const levelsStepInterval: number[] = [1800, 1500, 1200, 1000, 800, 700, 600, 500
 export default class Game extends createjs.Container {
   private _level: number;
   private _levelUpRows: number;
+  private _clearRowsScore: number[];
   private _options: IGameOptions;
   private _holdBlock: HoldBlock;
   private _nextBlocks: NextBlocks;
   private _board: Board;
+  private _infoPanel: InfoPanel;
   private _keyController: KeyController;
   private _fps: number;
   private _levelStepsCount: number;
@@ -71,14 +74,16 @@ export default class Game extends createjs.Container {
     this._options = _.assign({}, defaultOptions, options);
     const {cellWidth} = this._options;
     this._fps = createjs.Ticker.getFPS();
-    this._level = 0;
     this._levelUpRows = 30;
+    this._clearRowsScore = [100, 300, 600, 1000];
     this._setLevelFrames();
     this._initHoldBoard();
     this._initNextBlocks();
     this._initBoard();
+    this._initInfoPanel();
     this._initKeyController();
     this._initGameStatus();
+    this.level = 0;
     this.setHoldBoard({
       scale: 0.5,
       x: cellWidth,
@@ -129,7 +134,6 @@ export default class Game extends createjs.Container {
     }
     const _this = this;
     function countFrames() {
-    console.log(spendFrames);
       spendFrames++;
       if (spendFrames >= frames) {
         createjs.Ticker.off('tick', counter);
@@ -144,6 +148,13 @@ export default class Game extends createjs.Container {
   }
   public msToFrames(ms: number): number {
     return Math.round(ms * this._fps / 1000);
+  }
+  get level(): number {
+    return this._level;
+  }
+  set level(lv: number) {
+    this._level = lv;
+    this._infoPanel.level = lv;
   }
   private _initHoldBoard() {
     const {cellWidth} = this._options;
@@ -160,13 +171,15 @@ export default class Game extends createjs.Container {
     const {cellWidth, colsCount, rowsCount} = this._options;
     this._board = new Board(cellWidth, colsCount, rowsCount);
     this.addChild(this._board);
-    (<any>window).board = this._board;
+  }
+  private _initInfoPanel() {
+    this._infoPanel = new InfoPanel(this._options.cellWidth / 2);
+    this.addChild(this._infoPanel);
   }
   private _initKeyController() {
     const {stageCanvas} = this._options;
     this._keyController = new KeyController(stageCanvas);
     this._keyController.onKeydown.down = () => {
-      console.log('key: down');
       if (!this._isStarted || this._isPaused ||  this._isFrozen) {
         return;
       }
@@ -177,21 +190,18 @@ export default class Game extends createjs.Container {
       this._levelStepsCount = 0;
     };
     this._keyController.onKeydown.left = () => {
-      console.log('key: left');
       if (!this._isStarted || this._isPaused || this._isFrozen) {
         return;
       }
       this._board.moveBlock('left');
     };
     this._keyController.onKeydown.right = () => {
-      console.log('key: right');
       if (!this._isStarted || this._isPaused || this._isFrozen) {
         return;
       }
       this._board.moveBlock('right');
     };
     this._keyController.onKeydown.space = () => {
-      console.log('key: space');
       if (!this._isStarted || this._isPaused || this._isFrozen) {
         return;
       }
@@ -199,14 +209,12 @@ export default class Game extends createjs.Container {
       this._nextRound();
     };
     this._keyController.onKeydown.up = () => {
-      console.log('key: up');
       if (!this._isStarted || this._isPaused || this._isFrozen) {
         return;
       }
       this._board.activeBlockRotation++;
     };
     this._keyController.onKeydown.z = () => {
-      console.log('key: z');
       if (!this._isStarted || this._isPaused || this._isHolded) {
         return;
       }
@@ -258,6 +266,8 @@ export default class Game extends createjs.Container {
     }
     this._isHolded = false;
     const rows = this._board.getFullRow();
+    const getScore = this._clearRowsScore[rows.length - 1];
+    const blockInfo = this._board.getActiveBlockInfo();
     let ms = 300;
     let hasClearRows = false;
     if (rows.length) {
@@ -268,6 +278,18 @@ export default class Game extends createjs.Container {
       this._board.resetActiveBlock(this._nextBlocks.next());
       this._board.resetActiveBlockPos();
       this._board.resetRow(rows);
+      this._record.blockCount++;
+      this._record.blockCountByTypes[blockInfo.blockType]++;
+      if (rows.length) {
+        this._record.clearRowCount += rows.length;
+        this._record.clearCountByRows[rows.length - 1]++;
+        this._record.score += this._clearRowsScore[rows.length - 1];
+        console.log(this._record.score);
+        if (this._record.clearRowCount >= (this.level + 1) * 30) {
+          console.log('level up!');
+          this.level++;
+        }
+      }
     });
     if (hasClearRows) {
       this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), false, () => {

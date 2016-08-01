@@ -54,7 +54,7 @@
 	/// <reference path="../../typings/index.d.ts" />
 	"use strict";
 	var Game_1 = __webpack_require__(2);
-	var config_1 = __webpack_require__(13);
+	var config_1 = __webpack_require__(14);
 	initGame();
 	function initGame() {
 	    var canvas = document.getElementById('canvas');
@@ -92,7 +92,8 @@
 	var Block_1 = __webpack_require__(7);
 	var HoldBlock_1 = __webpack_require__(9);
 	var NextBlocks_1 = __webpack_require__(11);
-	var KeyController_1 = __webpack_require__(12);
+	var InfoPanel_1 = __webpack_require__(12);
+	var KeyController_1 = __webpack_require__(13);
 	var _ = __webpack_require__(4);
 	var levelsStepInterval = [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30];
 	var Game = (function (_super) {
@@ -109,14 +110,16 @@
 	        this._options = _.assign({}, defaultOptions, options);
 	        var cellWidth = this._options.cellWidth;
 	        this._fps = createjs.Ticker.getFPS();
-	        this._level = 0;
 	        this._levelUpRows = 30;
+	        this._clearRowsScore = [100, 300, 600, 1000];
 	        this._setLevelFrames();
 	        this._initHoldBoard();
 	        this._initNextBlocks();
 	        this._initBoard();
+	        this._initInfoPanel();
 	        this._initKeyController();
 	        this._initGameStatus();
+	        this.level = 0;
 	        this.setHoldBoard({
 	            scale: 0.5,
 	            x: cellWidth,
@@ -167,7 +170,6 @@
 	        }
 	        var _this = this;
 	        function countFrames() {
-	            console.log(spendFrames);
 	            spendFrames++;
 	            if (spendFrames >= frames) {
 	                createjs.Ticker.off('tick', counter);
@@ -183,6 +185,17 @@
 	    Game.prototype.msToFrames = function (ms) {
 	        return Math.round(ms * this._fps / 1000);
 	    };
+	    Object.defineProperty(Game.prototype, "level", {
+	        get: function () {
+	            return this._level;
+	        },
+	        set: function (lv) {
+	            this._level = lv;
+	            this._infoPanel.level = lv;
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
 	    Game.prototype._initHoldBoard = function () {
 	        var cellWidth = this._options.cellWidth;
 	        this._holdBlock = new HoldBlock_1.default(cellWidth);
@@ -198,14 +211,16 @@
 	        var _a = this._options, cellWidth = _a.cellWidth, colsCount = _a.colsCount, rowsCount = _a.rowsCount;
 	        this._board = new Board_1.default(cellWidth, colsCount, rowsCount);
 	        this.addChild(this._board);
-	        window.board = this._board;
+	    };
+	    Game.prototype._initInfoPanel = function () {
+	        this._infoPanel = new InfoPanel_1.default(this._options.cellWidth / 2);
+	        this.addChild(this._infoPanel);
 	    };
 	    Game.prototype._initKeyController = function () {
 	        var _this = this;
 	        var stageCanvas = this._options.stageCanvas;
 	        this._keyController = new KeyController_1.default(stageCanvas);
 	        this._keyController.onKeydown.down = function () {
-	            console.log('key: down');
 	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
 	                return;
 	            }
@@ -216,21 +231,18 @@
 	            _this._levelStepsCount = 0;
 	        };
 	        this._keyController.onKeydown.left = function () {
-	            console.log('key: left');
 	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
 	                return;
 	            }
 	            _this._board.moveBlock('left');
 	        };
 	        this._keyController.onKeydown.right = function () {
-	            console.log('key: right');
 	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
 	                return;
 	            }
 	            _this._board.moveBlock('right');
 	        };
 	        this._keyController.onKeydown.space = function () {
-	            console.log('key: space');
 	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
 	                return;
 	            }
@@ -238,14 +250,12 @@
 	            _this._nextRound();
 	        };
 	        this._keyController.onKeydown.up = function () {
-	            console.log('key: up');
 	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
 	                return;
 	            }
 	            _this._board.activeBlockRotation++;
 	        };
 	        this._keyController.onKeydown.z = function () {
-	            console.log('key: z');
 	            if (!_this._isStarted || _this._isPaused || _this._isHolded) {
 	                return;
 	            }
@@ -300,6 +310,8 @@
 	        }
 	        this._isHolded = false;
 	        var rows = this._board.getFullRow();
+	        var getScore = this._clearRowsScore[rows.length - 1];
+	        var blockInfo = this._board.getActiveBlockInfo();
 	        var ms = 300;
 	        var hasClearRows = false;
 	        if (rows.length) {
@@ -310,6 +322,18 @@
 	            _this._board.resetActiveBlock(_this._nextBlocks.next());
 	            _this._board.resetActiveBlockPos();
 	            _this._board.resetRow(rows);
+	            _this._record.blockCount++;
+	            _this._record.blockCountByTypes[blockInfo.blockType]++;
+	            if (rows.length) {
+	                _this._record.clearRowCount += rows.length;
+	                _this._record.clearCountByRows[rows.length - 1]++;
+	                _this._record.score += _this._clearRowsScore[rows.length - 1];
+	                console.log(_this._record.score);
+	                if (_this._record.clearRowCount >= (_this.level + 1) * 30) {
+	                    console.log('level up!');
+	                    _this.level++;
+	                }
+	            }
 	        });
 	        if (hasClearRows) {
 	            this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), false, function () {
@@ -445,7 +469,7 @@
 	        var groupedPos = _.groupBy(blockMapPositiion, 'col');
 	        _.forIn(groupedPos, function (colPos) {
 	            var bottomPosition = _.maxBy(colPos, 'row');
-	            var mapColTop = _this._getColTop(bottomPosition.col);
+	            var mapColTop = _this._getColTop(bottomPosition.col, bottomPosition.row);
 	            colsDistance.push(mapColTop.row - bottomPosition.row);
 	        });
 	        var moveSteps = _.min(colsDistance);
@@ -460,7 +484,6 @@
 	        var outRangeCellPos = [];
 	        var blockCellsMapPosition = this._activeBlockToMapPostion(blockPosition);
 	        _.forEach(blockCellsMapPosition, function (pos) {
-	            console.log(pos);
 	            if (_this.isInRange(pos)) {
 	                _this.setMap(pos, 1);
 	            }
@@ -689,9 +712,13 @@
 	        });
 	        return canMove;
 	    };
-	    Board.prototype._getColTop = function (col) {
+	    Board.prototype._getColTop = function (col, fromRow) {
+	        if (fromRow === void 0) { fromRow = 0; }
 	        var ret = { col: col, row: this._rowsCount - 1 };
 	        _.forEach(this._map, function (colCells, row) {
+	            if (row < fromRow) {
+	                return;
+	            }
 	            if (colCells[col] === 1) {
 	                ret.row = row - 1;
 	                return false;
@@ -17603,6 +17630,50 @@
 
 /***/ },
 /* 12 */
+/***/ function(module, exports) {
+
+	/// <reference path="../../../typings/index.d.ts" />
+	"use strict";
+	var __extends = (this && this.__extends) || function (d, b) {
+	    for (var p in b) if (b.hasOwnProperty(p)) d[p] = b[p];
+	    function __() { this.constructor = d; }
+	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
+	};
+	var InfoPanel = (function (_super) {
+	    __extends(InfoPanel, _super);
+	    function InfoPanel(fontsize) {
+	        _super.call(this);
+	        this._title = 'LEVEL';
+	        this._level = 0;
+	        this._initText(fontsize);
+	    }
+	    Object.defineProperty(InfoPanel.prototype, "level", {
+	        get: function () {
+	            return this._level;
+	        },
+	        set: function (lv) {
+	            this._level = lv;
+	            this._update();
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
+	    InfoPanel.prototype._initText = function (fontsize) {
+	        this._levelPanel = new createjs.Text(this._title);
+	        this._levelPanel.font = fontsize + "px Arial";
+	        this.addChild(this._levelPanel);
+	    };
+	    InfoPanel.prototype._update = function () {
+	        this._levelPanel.text = this._title + ": " + this._level;
+	    };
+	    return InfoPanel;
+	}(createjs.Container));
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = InfoPanel;
+
+
+/***/ },
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/// <reference path="../../../typings/index.d.ts" />
@@ -17728,7 +17799,7 @@
 
 
 /***/ },
-/* 13 */
+/* 14 */
 /***/ function(module, exports) {
 
 	"use strict";
