@@ -89,6 +89,7 @@
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var Board_1 = __webpack_require__(3);
+	var Block_1 = __webpack_require__(7);
 	var HoldBlock_1 = __webpack_require__(9);
 	var NextBlocks_1 = __webpack_require__(11);
 	var KeyController_1 = __webpack_require__(12);
@@ -133,6 +134,7 @@
 	    }
 	    Game.prototype.start = function () {
 	        this._initGameStatus();
+	        this._initRecord();
 	        this._board.clear();
 	        this._keyController.clearKeyDown();
 	        this._isStarted = true;
@@ -179,7 +181,7 @@
 	        this._keyController = new KeyController_1.default(stageCanvas);
 	        this._keyController.onKeydown.down = function () {
 	            console.log('key: down');
-	            if (!_this._isStarted || _this._isPause) {
+	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
 	                return;
 	            }
 	            var canMove = _this._board.moveBlock('down');
@@ -190,28 +192,36 @@
 	        };
 	        this._keyController.onKeydown.left = function () {
 	            console.log('key: left');
-	            if (!_this._isStarted || _this._isPause) {
+	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
 	                return;
 	            }
 	            _this._board.moveBlock('left');
 	        };
 	        this._keyController.onKeydown.right = function () {
 	            console.log('key: right');
-	            if (!_this._isStarted || _this._isPause) {
+	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
 	                return;
 	            }
 	            _this._board.moveBlock('right');
 	        };
+	        this._keyController.onKeydown.space = function () {
+	            console.log('key: space');
+	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
+	                return;
+	            }
+	            _this._board.fallDown();
+	            _this._nextRound();
+	        };
 	        this._keyController.onKeydown.up = function () {
 	            console.log('key: up');
-	            if (!_this._isStarted || _this._isPause) {
+	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
 	                return;
 	            }
 	            _this._board.activeBlockRotation++;
 	        };
 	        this._keyController.onKeydown.z = function () {
 	            console.log('key: z');
-	            if (!_this._isStarted || _this._isPause || _this._isHolded) {
+	            if (!_this._isStarted || _this._isPaused || _this._isHolded) {
 	                return;
 	            }
 	            _this._hold();
@@ -221,13 +231,7 @@
 	                _this.start();
 	            }
 	            else {
-	                _this._isPause = !_this._isPause;
-	                if (_this._isPause) {
-	                    _this._stopAutoFall();
-	                }
-	                else {
-	                    _this._autoFall();
-	                }
+	                _this._isPaused = !_this._isPaused;
 	            }
 	        };
 	    };
@@ -250,6 +254,9 @@
 	        createjs.Ticker.off('tick', this._tickerListener);
 	    };
 	    Game.prototype._stepsCount = function () {
+	        if (this._isFrozen || this._isPaused) {
+	            return;
+	        }
 	        this._levelStepsCount++;
 	        if (this._levelStepsCount >= this._getLevelFrames(this.level)) {
 	            this._levelStepsCount = 0;
@@ -277,8 +284,9 @@
 	    };
 	    Game.prototype._initGameStatus = function () {
 	        this._isStarted = false;
-	        this._isPause = false;
+	        this._isPaused = false;
 	        this._isHolded = false;
+	        this._isFrozen = false;
 	        this._levelStepsCount = 0;
 	        this._stopAutoFall();
 	    };
@@ -293,6 +301,26 @@
 	            this._board.resetActiveBlock(this._nextBlocks.next());
 	            this._board.resetActiveBlockPos();
 	        }
+	    };
+	    Game.prototype._initRecord = function () {
+	        this._record = {
+	            score: 0,
+	            highScore: [],
+	            clearRowCount: 0,
+	            clearCountByRows: [0, 0, 0, 0],
+	            blockCount: 0,
+	            blockCountByTypes: (_a = {},
+	                _a[Block_1.default.Type.I] = 0,
+	                _a[Block_1.default.Type.J] = 0,
+	                _a[Block_1.default.Type.L] = 0,
+	                _a[Block_1.default.Type.O] = 0,
+	                _a[Block_1.default.Type.S] = 0,
+	                _a[Block_1.default.Type.Z] = 0,
+	                _a[Block_1.default.Type.T] = 0,
+	                _a
+	            )
+	        };
+	        var _a;
 	    };
 	    return Game;
 	}(createjs.Container));
@@ -369,6 +397,21 @@
 	        this._activeBlockPosition = newPosition;
 	        this._updateActiveBlockPosition();
 	        return true;
+	    };
+	    Board.prototype.fallDown = function () {
+	        var _this = this;
+	        var blockMapPositiion = this._activeBlockToMapPostion();
+	        var colsDistance = [];
+	        var groupedPos = _.groupBy(blockMapPositiion, 'col');
+	        _.forIn(groupedPos, function (colPos) {
+	            var bottomPosition = _.maxBy(colPos, 'row');
+	            var mapColTop = _this._getColTop(bottomPosition.col);
+	            colsDistance.push(mapColTop.row - bottomPosition.row);
+	        });
+	        var moveSteps = _.min(colsDistance);
+	        var row = this._activeBlockPosition.row;
+	        this._activeBlockPosition.row = row + moveSteps;
+	        this._updateActiveBlockPosition();
 	    };
 	    Board.prototype.blockToMap = function (blockInfo, blockPosition) {
 	        var _this = this;
@@ -595,6 +638,16 @@
 	            }
 	        });
 	        return canMove;
+	    };
+	    Board.prototype._getColTop = function (col) {
+	        var ret = { col: col, row: this._rowsCount - 1 };
+	        _.forEach(this._map, function (colCells, row) {
+	            if (colCells[col] === 1) {
+	                ret.row = row - 1;
+	                return false;
+	            }
+	        });
+	        return ret;
 	    };
 	    return Board;
 	}(createjs.Container));

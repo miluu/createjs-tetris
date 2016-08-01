@@ -1,6 +1,7 @@
 /// <reference path="../../../typings/index.d.ts" />
 
 import Board from './Board';
+import Block from './Block';
 import HoldBlock from './HoldBlock';
 import NextBlocks from './NextBlocks';
 import KeyController from './KeyController';
@@ -28,6 +29,17 @@ interface ILevel {
   stepInterval: number;
 }
 
+interface IRecord {
+  score: number;
+  highScore: {time: Date, score: number}[];
+  clearRowCount: number;
+  clearCountByRows: number[];
+  blockCount: number;
+  blockCountByTypes: {
+    [blockType: string]: number;
+  };
+}
+
 const levelsStepInterval: number[] = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100];
 
 export default class Game extends createjs.Container {
@@ -43,7 +55,9 @@ export default class Game extends createjs.Container {
   private _tickerListener: Function;
   private _isStarted: boolean;
   private _isHolded: boolean;
-  private _isPause: boolean;
+  private _isPaused: boolean;
+  private _isFrozen: boolean;
+  private _record: IRecord;
   constructor(options?: IGameOptions) {
     super();
     const defaultOptions: IGameOptions = {
@@ -81,6 +95,7 @@ export default class Game extends createjs.Container {
   }
   public start() {
     this._initGameStatus();
+    this._initRecord();
     this._board.clear();
     this._keyController.clearKeyDown();
     this._isStarted = true;
@@ -104,6 +119,19 @@ export default class Game extends createjs.Container {
     this._nextBlocks.y = options.y;
     this._nextBlocks.scaleX = this._nextBlocks.scaleY = options.scale;
   }
+  public wait(frames: number, callback: Function) {
+    let spendFrames = 0;
+    const Ticker = createjs.Ticker;
+    const counter = Ticker.on('tick', countFrames);
+    function countFrames() {
+      console.log(spendFrames);
+      spendFrames++;
+      if (spendFrames >= frames) {
+        callback();
+        Ticker.off('tick', counter);
+      }
+    }
+  }
   private _initHoldBoard() {
     const {cellWidth} = this._options;
     this._holdBlock = new HoldBlock(cellWidth);
@@ -126,7 +154,7 @@ export default class Game extends createjs.Container {
     this._keyController = new KeyController(stageCanvas);
     this._keyController.onKeydown.down = () => {
       console.log('key: down');
-      if (!this._isStarted || this._isPause) {
+      if (!this._isStarted || this._isPaused ||  this._isFrozen) {
         return;
       }
       const canMove = this._board.moveBlock('down');
@@ -137,28 +165,36 @@ export default class Game extends createjs.Container {
     };
     this._keyController.onKeydown.left = () => {
       console.log('key: left');
-      if (!this._isStarted || this._isPause) {
+      if (!this._isStarted || this._isPaused || this._isFrozen) {
         return;
       }
       this._board.moveBlock('left');
     };
     this._keyController.onKeydown.right = () => {
       console.log('key: right');
-      if (!this._isStarted || this._isPause) {
+      if (!this._isStarted || this._isPaused || this._isFrozen) {
         return;
       }
       this._board.moveBlock('right');
     };
+    this._keyController.onKeydown.space = () => {
+      console.log('key: space');
+      if (!this._isStarted || this._isPaused || this._isFrozen) {
+        return;
+      }
+      this._board.fallDown();
+      this._nextRound();
+    };
     this._keyController.onKeydown.up = () => {
       console.log('key: up');
-      if (!this._isStarted || this._isPause) {
+      if (!this._isStarted || this._isPaused || this._isFrozen) {
         return;
       }
       this._board.activeBlockRotation++;
     };
     this._keyController.onKeydown.z = () => {
       console.log('key: z');
-      if (!this._isStarted || this._isPause || this._isHolded) {
+      if (!this._isStarted || this._isPaused || this._isHolded) {
         return;
       }
       this._hold();
@@ -167,12 +203,7 @@ export default class Game extends createjs.Container {
       if (!this._isStarted) {
         this.start();
       } else {
-        this._isPause = !this._isPause;
-        if (this._isPause) {
-          this._stopAutoFall();
-        } else {
-          this._autoFall();
-        }
+        this._isPaused = !this._isPaused;
       }
     };
   }
@@ -194,6 +225,9 @@ export default class Game extends createjs.Container {
     createjs.Ticker.off('tick', this._tickerListener);
   }
   private _stepsCount() {
+    if (this._isFrozen || this._isPaused) {
+      return;
+    }
     this._levelStepsCount++;
     if (this._levelStepsCount >= this._getLevelFrames(this.level)) {
       this._levelStepsCount = 0;
@@ -221,8 +255,9 @@ export default class Game extends createjs.Container {
   }
   private _initGameStatus() {
     this._isStarted = false;
-    this._isPause = false;
+    this._isPaused = false;
     this._isHolded = false;
+    this._isFrozen = false;
     this._levelStepsCount = 0;
     this._stopAutoFall();
   }
@@ -236,5 +271,23 @@ export default class Game extends createjs.Container {
       this._board.resetActiveBlock(this._nextBlocks.next());
       this._board.resetActiveBlockPos();
     }
+  }
+  private _initRecord() {
+    this._record = {
+      score: 0,
+      highScore: [],
+      clearRowCount: 0,
+      clearCountByRows: [0, 0, 0, 0],
+      blockCount: 0,
+      blockCountByTypes: {
+        [Block.Type.I]: 0,
+        [Block.Type.J]: 0,
+        [Block.Type.L]: 0,
+        [Block.Type.O]: 0,
+        [Block.Type.S]: 0,
+        [Block.Type.Z]: 0,
+        [Block.Type.T]: 0,
+      }
+    };
   }
 }

@@ -77,6 +77,21 @@ export default class Board extends createjs.Container {
     return true;
   }
 
+  public fallDown() {
+    const blockMapPositiion = this._activeBlockToMapPostion();
+    const colsDistance: number[] = [];
+    const groupedPos = _.groupBy(blockMapPositiion, 'col');
+    _.forIn(groupedPos, (colPos: IMapPosition[]) => {
+      const bottomPosition = _.maxBy(colPos, 'row');
+      const mapColTop = this._getColTop(bottomPosition.col);
+      colsDistance.push(mapColTop.row - bottomPosition.row);
+    });
+    const moveSteps = _.min(colsDistance);
+    const {row} = this._activeBlockPosition;
+    this._activeBlockPosition.row = row + moveSteps;
+    this._updateActiveBlockPosition();
+  }
+
   public blockToMap(blockInfo: IBlockInfo = this._activeBlock.getBlockInfo(), blockPosition: IMapPosition = this._activeBlockPosition): IMapPosition[] {
     const outRangeCellPos: IMapPosition[] = [];
     const blockCellsMapPosition = this._activeBlockToMapPostion(blockPosition);
@@ -298,5 +313,16 @@ export default class Board extends createjs.Container {
       }
     });
     return canMove;
+  }
+
+  private _getColTop(col: number): IMapPosition {
+    let ret = {col, row: this._rowsCount - 1};
+    _.forEach(this._map, (colCells, row) => {
+      if (colCells[col] === 1) {
+        ret.row = row - 1;
+        return false;
+      }
+    });
+    return ret;
   }
 }
