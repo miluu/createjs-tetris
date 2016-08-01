@@ -40,10 +40,11 @@ interface IRecord {
   };
 }
 
-const levelsStepInterval: number[] = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100];
+const levelsStepInterval: number[] = [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30];
 
 export default class Game extends createjs.Container {
-  public level: number;
+  private _level: number;
+  private _levelUpRows: number;
   private _options: IGameOptions;
   private _holdBlock: HoldBlock;
   private _nextBlocks: NextBlocks;
@@ -70,7 +71,8 @@ export default class Game extends createjs.Container {
     this._options = _.assign({}, defaultOptions, options);
     const {cellWidth} = this._options;
     this._fps = createjs.Ticker.getFPS();
-    this.level = 0;
+    this._level = 0;
+    this._levelUpRows = 30;
     this._setLevelFrames();
     this._initHoldBoard();
     this._initNextBlocks();
@@ -119,18 +121,29 @@ export default class Game extends createjs.Container {
     this._nextBlocks.y = options.y;
     this._nextBlocks.scaleX = this._nextBlocks.scaleY = options.scale;
   }
-  public wait(frames: number, callback: Function) {
+  public wait(frames: number, frozen: boolean, callback?: Function) {
     let spendFrames = 0;
-    const Ticker = createjs.Ticker;
-    const counter = Ticker.on('tick', countFrames);
+    const counter = createjs.Ticker.on('tick', countFrames);
+    if (frozen) {
+      this._isFrozen = true;
+    }
+    const _this = this;
     function countFrames() {
-      console.log(spendFrames);
+    console.log(spendFrames);
       spendFrames++;
       if (spendFrames >= frames) {
-        callback();
-        Ticker.off('tick', counter);
+        createjs.Ticker.off('tick', counter);
+        if (callback) {
+          callback();
+        }
+        if (frozen) {
+          _this._isFrozen = false;
+        }
       }
     }
+  }
+  public msToFrames(ms: number): number {
+    return Math.round(ms * this._fps / 1000);
   }
   private _initHoldBoard() {
     const {cellWidth} = this._options;
@@ -213,7 +226,7 @@ export default class Game extends createjs.Container {
   private _setLevelFrames() {
     this._levelFrames = [];
     _.forEach(levelsStepInterval, (stepInterval) => {
-      const frames = Math.round(stepInterval * this._fps / 1000);
+      const frames = this.msToFrames(stepInterval);
       this._levelFrames.push(frames);
     });
   }
@@ -229,7 +242,7 @@ export default class Game extends createjs.Container {
       return;
     }
     this._levelStepsCount++;
-    if (this._levelStepsCount >= this._getLevelFrames(this.level)) {
+    if (this._levelStepsCount >= this._getLevelFrames(this._level)) {
       this._levelStepsCount = 0;
       const canMove = this._board.moveBlock('down');
       if (!canMove) {
@@ -239,14 +252,28 @@ export default class Game extends createjs.Container {
   }
   private _nextRound() {
     const outRangeCellsPos = this._board.blockToMap();
-    this._board.clearFullRow();
     if (outRangeCellsPos.length) {
       this._gameOver();
       return;
     }
     this._isHolded = false;
-    this._board.resetActiveBlock(this._nextBlocks.next());
-    this._board.resetActiveBlockPos();
+    const rows = this._board.getFullRow();
+    let ms = 300;
+    let hasClearRows = false;
+    if (rows.length) {
+      hasClearRows = true;
+    }
+    this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), true);
+    this.wait(this.msToFrames(ms), false, () => {
+      this._board.resetActiveBlock(this._nextBlocks.next());
+      this._board.resetActiveBlockPos();
+      this._board.resetRow(rows);
+    });
+    if (hasClearRows) {
+      this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), false, () => {
+        this._board.clearRow(rows);
+      });
+    }
   }
   private _gameOver() {
     alert('Game Over!');

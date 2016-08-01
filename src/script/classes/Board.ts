@@ -114,26 +114,35 @@ export default class Board extends createjs.Container {
     return false;
   }
 
-  public clearFullRow() {
-    let map = this._map;
+  public getFullRow(): number[] {
     let fullRowIndex: number[] = [];
     for (let row = this._rowsCount - 1; row >= 0; row--) {
-      let mapCol = map[row];
+      let mapCol = this._map[row];
       if (_.includes(mapCol, 0)) {
         continue;
       }
       fullRowIndex.push(row);
     }
-    if (!fullRowIndex.length) {
-      return;
-    }
-    _.pullAt(map, fullRowIndex);
+    return fullRowIndex;
+  }
+  public resetRow(rows: number[]) {
     const emptyRow: number[] = new Array(this._colsCount);
     _.fill(emptyRow, 0);
-    _.times(fullRowIndex.length, () => {
-      map.unshift(emptyRow.concat());
+    let fullRowIndex: number[] = [];
+    _.forEach(rows, (row) => {
+      this._map[row] = emptyRow.concat();
     });
-    this.map = map;
+    this._updateMapView();
+  }
+
+  public clearRow(rows: number[]) {
+    _.pullAt(this._map, rows);
+    const emptyRow: number[] = new Array(this._colsCount);
+    _.fill(emptyRow, 0);
+    _.times(rows.length, () => {
+      this._map.unshift(emptyRow.concat());
+    });
+    this._updateMapView();
   }
 
   public clear() {

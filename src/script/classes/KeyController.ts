@@ -41,7 +41,7 @@ export default class KeyController {
     private _dom: HTMLCanvasElement | HTMLElement | Window = window,
     public onKeydown?: IKeyControllerMehtods,
     public interval: number = 50,
-    public firstIntervalRatio: number = 3,
+    public firstIntervalRatio: number = 2,
     private _enabled: boolean = true
   ) {
     this._intervalFirst = {};

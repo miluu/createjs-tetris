@@ -94,7 +94,7 @@
 	var NextBlocks_1 = __webpack_require__(11);
 	var KeyController_1 = __webpack_require__(12);
 	var _ = __webpack_require__(4);
-	var levelsStepInterval = [1000, 900, 800, 700, 600, 500, 400, 300, 200, 100];
+	var levelsStepInterval = [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30];
 	var Game = (function (_super) {
 	    __extends(Game, _super);
 	    function Game(options) {
@@ -109,7 +109,8 @@
 	        this._options = _.assign({}, defaultOptions, options);
 	        var cellWidth = this._options.cellWidth;
 	        this._fps = createjs.Ticker.getFPS();
-	        this.level = 0;
+	        this._level = 0;
+	        this._levelUpRows = 30;
 	        this._setLevelFrames();
 	        this._initHoldBoard();
 	        this._initNextBlocks();
@@ -157,6 +158,30 @@
 	        this._nextBlocks.x = options.x;
 	        this._nextBlocks.y = options.y;
 	        this._nextBlocks.scaleX = this._nextBlocks.scaleY = options.scale;
+	    };
+	    Game.prototype.wait = function (frames, frozen, callback) {
+	        var spendFrames = 0;
+	        var counter = createjs.Ticker.on('tick', countFrames);
+	        if (frozen) {
+	            this._isFrozen = true;
+	        }
+	        var _this = this;
+	        function countFrames() {
+	            console.log(spendFrames);
+	            spendFrames++;
+	            if (spendFrames >= frames) {
+	                createjs.Ticker.off('tick', counter);
+	                if (callback) {
+	                    callback();
+	                }
+	                if (frozen) {
+	                    _this._isFrozen = false;
+	                }
+	            }
+	        }
+	    };
+	    Game.prototype.msToFrames = function (ms) {
+	        return Math.round(ms * this._fps / 1000);
 	    };
 	    Game.prototype._initHoldBoard = function () {
 	        var cellWidth = this._options.cellWidth;
@@ -242,7 +267,7 @@
 	        var _this = this;
 	        this._levelFrames = [];
 	        _.forEach(levelsStepInterval, function (stepInterval) {
-	            var frames = Math.round(stepInterval * _this._fps / 1000);
+	            var frames = _this.msToFrames(stepInterval);
 	            _this._levelFrames.push(frames);
 	        });
 	    };
@@ -258,7 +283,7 @@
 	            return;
 	        }
 	        this._levelStepsCount++;
-	        if (this._levelStepsCount >= this._getLevelFrames(this.level)) {
+	        if (this._levelStepsCount >= this._getLevelFrames(this._level)) {
 	            this._levelStepsCount = 0;
 	            var canMove = this._board.moveBlock('down');
 	            if (!canMove) {
@@ -267,15 +292,30 @@
 	        }
 	    };
 	    Game.prototype._nextRound = function () {
+	        var _this = this;
 	        var outRangeCellsPos = this._board.blockToMap();
-	        this._board.clearFullRow();
 	        if (outRangeCellsPos.length) {
 	            this._gameOver();
 	            return;
 	        }
 	        this._isHolded = false;
-	        this._board.resetActiveBlock(this._nextBlocks.next());
-	        this._board.resetActiveBlockPos();
+	        var rows = this._board.getFullRow();
+	        var ms = 300;
+	        var hasClearRows = false;
+	        if (rows.length) {
+	            hasClearRows = true;
+	        }
+	        this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), true);
+	        this.wait(this.msToFrames(ms), false, function () {
+	            _this._board.resetActiveBlock(_this._nextBlocks.next());
+	            _this._board.resetActiveBlockPos();
+	            _this._board.resetRow(rows);
+	        });
+	        if (hasClearRows) {
+	            this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), false, function () {
+	                _this._board.clearRow(rows);
+	            });
+	        }
 	    };
 	    Game.prototype._gameOver = function () {
 	        alert('Game Over!');
@@ -437,26 +477,36 @@
 	        }
 	        return false;
 	    };
-	    Board.prototype.clearFullRow = function () {
-	        var map = this._map;
+	    Board.prototype.getFullRow = function () {
 	        var fullRowIndex = [];
 	        for (var row = this._rowsCount - 1; row >= 0; row--) {
-	            var mapCol = map[row];
+	            var mapCol = this._map[row];
 	            if (_.includes(mapCol, 0)) {
 	                continue;
 	            }
 	            fullRowIndex.push(row);
 	        }
-	        if (!fullRowIndex.length) {
-	            return;
-	        }
-	        _.pullAt(map, fullRowIndex);
+	        return fullRowIndex;
+	    };
+	    Board.prototype.resetRow = function (rows) {
+	        var _this = this;
 	        var emptyRow = new Array(this._colsCount);
 	        _.fill(emptyRow, 0);
-	        _.times(fullRowIndex.length, function () {
-	            map.unshift(emptyRow.concat());
+	        var fullRowIndex = [];
+	        _.forEach(rows, function (row) {
+	            _this._map[row] = emptyRow.concat();
 	        });
-	        this.map = map;
+	        this._updateMapView();
+	    };
+	    Board.prototype.clearRow = function (rows) {
+	        var _this = this;
+	        _.pullAt(this._map, rows);
+	        var emptyRow = new Array(this._colsCount);
+	        _.fill(emptyRow, 0);
+	        _.times(rows.length, function () {
+	            _this._map.unshift(emptyRow.concat());
+	        });
+	        this._updateMapView();
 	    };
 	    Board.prototype.clear = function () {
 	        this._initMap();
@@ -17572,7 +17622,7 @@
 	        var _this = this;
 	        if (_dom === void 0) { _dom = window; }
 	        if (interval === void 0) { interval = 50; }
-	        if (firstIntervalRatio === void 0) { firstIntervalRatio = 3; }
+	        if (firstIntervalRatio === void 0) { firstIntervalRatio = 2; }
 	        if (_enabled === void 0) { _enabled = true; }
 	        this._dom = _dom;
 	        this.onKeydown = onKeydown;
