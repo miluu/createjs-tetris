@@ -4,7 +4,7 @@ import Board from './Board';
 import Block from './Block';
 import HoldBlock from './HoldBlock';
 import NextBlocks from './NextBlocks';
-import InfoPanel from './InfoPanel';
+import Infos from './Infos';
 import KeyController from './KeyController';
 import * as _ from 'lodash';
 
@@ -33,8 +33,8 @@ interface ILevel {
 interface IRecord {
   score: number;
   highScore: {time: Date, score: number}[];
-  clearRowCount: number;
-  clearCountByRows: number[];
+  clearLines: number;
+  clearCountByLines: number[];
   blockCount: number;
   blockCountByTypes: {
     [blockType: string]: number;
@@ -51,7 +51,7 @@ export default class Game extends createjs.Container {
   private _holdBlock: HoldBlock;
   private _nextBlocks: NextBlocks;
   private _board: Board;
-  private _infoPanel: InfoPanel;
+  private _infoPanel: Infos;
   private _keyController: KeyController;
   private _fps: number;
   private _levelStepsCount: number;
@@ -176,7 +176,7 @@ export default class Game extends createjs.Container {
     this.addChild(this._board);
   }
   private _initInfoPanel() {
-    this._infoPanel = new InfoPanel(this._options.cellWidth / 2);
+    this._infoPanel = new Infos(this._options.cellWidth / 2);
     this._infoPanel.x = this._options.cellWidth;
     this._infoPanel.y = (this._options.rowsCount - 6) * this._options.cellWidth;
     this.addChild(this._infoPanel);
@@ -274,11 +274,11 @@ export default class Game extends createjs.Container {
     const getScore = this._clearRowsScore[rows.length - 1];
     const blockInfo = this._board.getActiveBlockInfo();
     let ms = 300;
-    let hasClearRows = false;
+    let hasClearLines = false;
     if (rows.length) {
-      hasClearRows = true;
+      hasClearLines = true;
     }
-    this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), true);
+    this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), true);
     this.wait(this.msToFrames(ms), false, () => {
       this._board.resetActiveBlock(this._nextBlocks.next());
       this._board.resetActiveBlockPos();
@@ -286,18 +286,18 @@ export default class Game extends createjs.Container {
       this._record.blockCount++;
       this._record.blockCountByTypes[blockInfo.blockType]++;
       if (rows.length) {
-        this._record.clearRowCount += rows.length;
-        this._record.clearCountByRows[rows.length - 1]++;
+        this._record.clearLines += rows.length;
+        this._record.clearCountByLines[rows.length - 1]++;
         this._record.score += this._clearRowsScore[rows.length - 1];
-        this._infoPanel.rows = this._record.clearRowCount;
+        this._infoPanel.rows = this._record.clearLines;
         this._infoPanel.score = this._record.score;
-        if (this._record.clearRowCount >= (this.level + 1) * 30) {
+        if (this._record.clearLines >= (this.level + 1) * 30) {
           this.level++;
         }
       }
     });
-    if (hasClearRows) {
-      this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), false, () => {
+    if (hasClearLines) {
+      this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), false, () => {
         this._board.clearRow(rows);
       });
     }
@@ -330,8 +330,8 @@ export default class Game extends createjs.Container {
     this._record = {
       score: 0,
       highScore: [],
-      clearRowCount: 0,
-      clearCountByRows: [0, 0, 0, 0],
+      clearLines: 0,
+      clearCountByLines: [0, 0, 0, 0],
       blockCount: 0,
       blockCountByTypes: {
         [Block.Type.I]: 0,

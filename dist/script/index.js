@@ -92,7 +92,7 @@
 	var Block_1 = __webpack_require__(7);
 	var HoldBlock_1 = __webpack_require__(9);
 	var NextBlocks_1 = __webpack_require__(11);
-	var InfoPanel_1 = __webpack_require__(12);
+	var Infos_1 = __webpack_require__(12);
 	var KeyController_1 = __webpack_require__(13);
 	var _ = __webpack_require__(4);
 	var levelsStepInterval = [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30];
@@ -216,7 +216,7 @@
 	        this.addChild(this._board);
 	    };
 	    Game.prototype._initInfoPanel = function () {
-	        this._infoPanel = new InfoPanel_1.default(this._options.cellWidth / 2);
+	        this._infoPanel = new Infos_1.default(this._options.cellWidth / 2);
 	        this._infoPanel.x = this._options.cellWidth;
 	        this._infoPanel.y = (this._options.rowsCount - 6) * this._options.cellWidth;
 	        this.addChild(this._infoPanel);
@@ -318,11 +318,11 @@
 	        var getScore = this._clearRowsScore[rows.length - 1];
 	        var blockInfo = this._board.getActiveBlockInfo();
 	        var ms = 300;
-	        var hasClearRows = false;
+	        var hasClearLines = false;
 	        if (rows.length) {
-	            hasClearRows = true;
+	            hasClearLines = true;
 	        }
-	        this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), true);
+	        this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), true);
 	        this.wait(this.msToFrames(ms), false, function () {
 	            _this._board.resetActiveBlock(_this._nextBlocks.next());
 	            _this._board.resetActiveBlockPos();
@@ -330,18 +330,18 @@
 	            _this._record.blockCount++;
 	            _this._record.blockCountByTypes[blockInfo.blockType]++;
 	            if (rows.length) {
-	                _this._record.clearRowCount += rows.length;
-	                _this._record.clearCountByRows[rows.length - 1]++;
+	                _this._record.clearLines += rows.length;
+	                _this._record.clearCountByLines[rows.length - 1]++;
 	                _this._record.score += _this._clearRowsScore[rows.length - 1];
-	                _this._infoPanel.rows = _this._record.clearRowCount;
+	                _this._infoPanel.rows = _this._record.clearLines;
 	                _this._infoPanel.score = _this._record.score;
-	                if (_this._record.clearRowCount >= (_this.level + 1) * 30) {
+	                if (_this._record.clearLines >= (_this.level + 1) * 30) {
 	                    _this.level++;
 	                }
 	            }
 	        });
-	        if (hasClearRows) {
-	            this.wait(this.msToFrames(ms * (hasClearRows ? 2 : 1)), false, function () {
+	        if (hasClearLines) {
+	            this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), false, function () {
 	                _this._board.clearRow(rows);
 	            });
 	        }
@@ -375,8 +375,8 @@
 	        this._record = {
 	            score: 0,
 	            highScore: [],
-	            clearRowCount: 0,
-	            clearCountByRows: [0, 0, 0, 0],
+	            clearLines: 0,
+	            clearCountByLines: [0, 0, 0, 0],
 	            blockCount: 0,
 	            blockCountByTypes: (_a = {},
 	                _a[Block_1.default.Type.I] = 0,
@@ -17644,21 +17644,21 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var InfoPanel = (function (_super) {
-	    __extends(InfoPanel, _super);
-	    function InfoPanel(fontsize) {
+	var Infos = (function (_super) {
+	    __extends(Infos, _super);
+	    function Infos(fontsize) {
 	        _super.call(this);
 	        this._levelTitle = 'LEVEL';
 	        this._level = 0;
 	        this._initLevel(fontsize);
-	        this._rowsTitle = 'CLEAR';
+	        this._linesTitle = 'LINES';
 	        this._rows = 0;
 	        this._initRows(fontsize);
 	        this._scoreTitle = 'SCORE';
 	        this._score = 0;
 	        this._initScore(fontsize);
 	    }
-	    Object.defineProperty(InfoPanel.prototype, "level", {
+	    Object.defineProperty(Infos.prototype, "level", {
 	        get: function () {
 	            return this._level;
 	        },
@@ -17669,7 +17669,7 @@
 	        enumerable: true,
 	        configurable: true
 	    });
-	    Object.defineProperty(InfoPanel.prototype, "rows", {
+	    Object.defineProperty(Infos.prototype, "rows", {
 	        get: function () {
 	            return this._rows;
 	        },
@@ -17680,7 +17680,7 @@
 	        enumerable: true,
 	        configurable: true
 	    });
-	    Object.defineProperty(InfoPanel.prototype, "score", {
+	    Object.defineProperty(Infos.prototype, "score", {
 	        get: function () {
 	            return this._rows;
 	        },
@@ -17691,32 +17691,32 @@
 	        enumerable: true,
 	        configurable: true
 	    });
-	    InfoPanel.prototype._initLevel = function (fontsize) {
+	    Infos.prototype._initLevel = function (fontsize) {
 	        this._levelPanel = new createjs.Text(this._levelTitle);
 	        this._levelPanel.font = fontsize + "px Arial";
 	        this.addChild(this._levelPanel);
 	    };
-	    InfoPanel.prototype._initRows = function (fontsize) {
-	        this._rowsPanel = new createjs.Text(this._rowsTitle);
-	        this._rowsPanel.font = fontsize + "px Arial";
-	        this._rowsPanel.y = fontsize * 2;
-	        this.addChild(this._rowsPanel);
+	    Infos.prototype._initRows = function (fontsize) {
+	        this._linesPanel = new createjs.Text(this._linesTitle);
+	        this._linesPanel.font = fontsize + "px Arial";
+	        this._linesPanel.y = fontsize * 2;
+	        this.addChild(this._linesPanel);
 	    };
-	    InfoPanel.prototype._initScore = function (fontsize) {
+	    Infos.prototype._initScore = function (fontsize) {
 	        this._scorePanel = new createjs.Text(this._scoreTitle);
 	        this._scorePanel.font = fontsize + "px Arial";
 	        this._scorePanel.y = fontsize * 4;
 	        this.addChild(this._scorePanel);
 	    };
-	    InfoPanel.prototype._update = function () {
+	    Infos.prototype._update = function () {
 	        this._levelPanel.text = this._levelTitle + ": " + this._level;
-	        this._rowsPanel.text = this._rowsTitle + ": " + this._rows;
+	        this._linesPanel.text = this._linesTitle + ": " + this._rows;
 	        this._scorePanel.text = this._scoreTitle + ": " + this._score;
 	    };
-	    return InfoPanel;
+	    return Infos;
 	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = InfoPanel;
+	exports.default = Infos;
 
 
 /***/ },
@@ -17739,7 +17739,7 @@
 	    function KeyController(_dom, onKeydown, interval, firstIntervalRatio, _enabled) {
 	        var _this = this;
 	        if (_dom === void 0) { _dom = window; }
-	        if (interval === void 0) { interval = 50; }
+	        if (interval === void 0) { interval = 80; }
 	        if (firstIntervalRatio === void 0) { firstIntervalRatio = 2; }
 	        if (_enabled === void 0) { _enabled = true; }
 	        this._dom = _dom;

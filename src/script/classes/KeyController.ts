@@ -40,7 +40,7 @@ export default class KeyController {
   constructor(
     private _dom: HTMLCanvasElement | HTMLElement | Window = window,
     public onKeydown?: IKeyControllerMehtods,
-    public interval: number = 50,
+    public interval: number = 80,
     public firstIntervalRatio: number = 2,
     private _enabled: boolean = true
   ) {
