@@ -6,6 +6,7 @@ import HoldBlock from './HoldBlock';
 import NextBlocks from './NextBlocks';
 import Infos from './Infos';
 import KeyController from './KeyController';
+import Star from './Star';
 import * as _ from 'lodash';
 
 interface IGameOptions {
@@ -210,7 +211,8 @@ export default class Game extends createjs.Container {
       if (!this._isStarted || this._isPaused || this._isFrozen) {
         return;
       }
-      this._board.fallDown();
+      const {x, y, width, height} = this._board.fallDown();
+      this._twinkleStar(x + this._board.x - 6, y + this._board.y - 6, width, height, width * height / Math.pow(this._options.cellWidth, 2) * 1);
       this._nextRound();
     };
     this._keyController.onKeydown.up = () => {
@@ -343,5 +345,20 @@ export default class Game extends createjs.Container {
         [Block.Type.T]: 0,
       }
     };
+  }
+  private _twinkleStar(x: number, y: number, width: number, height: number, starCount: number) {
+    const stars: Star[] = [];
+    _.times(starCount, (i) => {
+      const star = new Star();
+      star.x = Math.round(Math.random() * width) + x;
+      star.y = Math.round(Math.random() * height) + y;
+      stars.push(star);
+      this.wait(i, false, () => {
+        this.addChild(star);
+        this.wait(16, false, () => {
+          this.removeChild(star);
+        });
+      });
+    });
   }
 }

@@ -1,6 +1,7 @@
 /// <reference path="../../typings/index.d.ts" />
 
 import Game from './classes/Game';
+import Star from './classes/Star';
 import config from './config';
 
 initGame();
@@ -16,6 +17,11 @@ function initGame() {
     colsCount: config.COLS_COUNT,
     rowsCount: config.ROWS_COUNT
   });
+  const star = new Star();
+  star.x = 10;
+  star.y = 10;
+  stage.addChild(star);
+  console.log(star);
   stage.addChild(game);
   stage.update();
   Ticker.timingMode = Ticker.RAF;
@@ -23,6 +29,7 @@ function initGame() {
     stage.update();
   });
   (<any>window).game = game;
+  (<any>window).star = star;
 }
 
 
