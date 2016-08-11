@@ -54,7 +54,7 @@
 	/// <reference path="../../typings/index.d.ts" />
 	"use strict";
 	var Game_1 = __webpack_require__(2);
-	var Star_1 = __webpack_require__(14);
+	var Firefly_1 = __webpack_require__(14);
 	var config_1 = __webpack_require__(15);
 	initGame();
 	function initGame() {
@@ -68,19 +68,20 @@
 	        colsCount: config_1.default.COLS_COUNT,
 	        rowsCount: config_1.default.ROWS_COUNT
 	    });
-	    var star = new Star_1.default();
-	    star.x = 10;
-	    star.y = 10;
-	    stage.addChild(star);
-	    console.log(star);
 	    stage.addChild(game);
+	    var firefly = new Firefly_1.default();
+	    firefly.x = 200;
+	    firefly.y = 200;
+	    firefly.scaleX = firefly.scaleY = 1;
+	    stage.addChild(firefly);
+	    console.log(firefly);
 	    stage.update();
 	    Ticker.timingMode = Ticker.RAF;
 	    Ticker.on('tick', function () {
 	        stage.update();
 	    });
 	    window.game = game;
-	    window.star = star;
+	    window.star = firefly;
 	}
 
 
@@ -101,7 +102,7 @@
 	var NextBlocks_1 = __webpack_require__(11);
 	var Infos_1 = __webpack_require__(12);
 	var KeyController_1 = __webpack_require__(13);
-	var Star_1 = __webpack_require__(14);
+	var Firefly_1 = __webpack_require__(14);
 	var _ = __webpack_require__(4);
 	var levelsStepInterval = [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30];
 	var Game = (function (_super) {
@@ -260,7 +261,7 @@
 	                return;
 	            }
 	            var _a = _this._board.fallDown(), x = _a.x, y = _a.y, width = _a.width, height = _a.height;
-	            _this._twinkleStar(x + _this._board.x - 6, y + _this._board.y - 6, width, height, width * height / Math.pow(_this._options.cellWidth, 2) * 1);
+	            _this._playFirefly(x + _this._board.x - 6, y + _this._board.y - 6, width, height, width * height / Math.pow(_this._options.cellWidth, 2) * 1);
 	            _this._nextRound();
 	        };
 	        this._keyController.onKeydown.up = function () {
@@ -400,19 +401,28 @@
 	        };
 	        var _a;
 	    };
-	    Game.prototype._twinkleStar = function (x, y, width, height, starCount) {
+	    Game.prototype._playFirefly = function (x, y, width, height, firefliesCount) {
 	        var _this = this;
-	        var stars = [];
-	        _.times(starCount, function (i) {
-	            var star = new Star_1.default();
-	            star.x = Math.round(Math.random() * width) + x;
-	            star.y = Math.round(Math.random() * height) + y;
-	            stars.push(star);
-	            _this.wait(i, false, function () {
-	                _this.addChild(star);
-	                _this.wait(16, false, function () {
-	                    _this.removeChild(star);
-	                });
+	        // const stars: Star[] = [];
+	        // _.times(starCount, (i) => {
+	        //   const star = new Star();
+	        //   star.x = Math.round(Math.random() * width) + x;
+	        //   star.y = Math.round(Math.random() * height) + y;
+	        //   stars.push(star);
+	        //   this.wait(i, false, () => {
+	        //     this.addChild(star);
+	        //     this.wait(16, false, () => {
+	        //       this.removeChild(star);
+	        //     });
+	        //   });
+	        // });
+	        _.times(firefliesCount, function (i) {
+	            var firefly = new Firefly_1.default();
+	            firefly.x = Math.round(Math.random() * width) + x;
+	            firefly.y = Math.round(Math.random() * height) + y;
+	            _this.addChild(firefly);
+	            firefly.animate(500, function () {
+	                _this.removeChild(firefly);
 	            });
 	        });
 	    };
@@ -17880,7 +17890,7 @@
 
 /***/ },
 /* 14 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ function(module, exports) {
 
 	"use strict";
 	var __extends = (this && this.__extends) || function (d, b) {
@@ -17888,94 +17898,59 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	/// <reference path="../../../typings/index.d.ts" />
-	var _ = __webpack_require__(4);
-	var Star = (function (_super) {
-	    __extends(Star, _super);
-	    function Star() {
+	var Firefly = (function (_super) {
+	    __extends(Firefly, _super);
+	    function Firefly() {
 	        _super.call(this);
-	        this._initStar();
-	        this._initLines();
+	        this._initShape();
 	        var center = new createjs.Shape();
-	        this.addChild(center);
+	        center.graphics.
+	            beginFill('red')
+	            .drawCircle(0, 0, 1);
 	    }
-	    Star.prototype.gone = function (ms) {
-	        createjs.Tween.get(this.star)
-	            .to({
-	            alpha: 0,
-	        }, ms, createjs.Ease.circOut);
-	        this.boom(ms, 20, true);
-	    };
-	    Star.prototype.spin = function (ms, degree, reset, callback) {
-	        var _this = this;
-	        if (degree === void 0) { degree = 360; }
-	        if (reset === void 0) { reset = false; }
+	    Firefly.prototype.animate = function (ms, callback) {
+	        this.randomScale();
+	        this.color(255, 255, 0);
+	        var _a = this.shape, x = _a.x, y = _a.y;
+	        var y1 = y - Math.random() * 4 - 4;
+	        var t = Math.random() * 100 + ms - 50;
 	        createjs.Tween
-	            .get(this.star)
-	            .to({ rotation: degree }, ms, createjs.Ease.sineOut)
+	            .get(this.shape)
+	            .to({
+	            y: y1,
+	            alpha: 0
+	        }, t, createjs.Ease.linear)
 	            .call(function () {
-	            if (reset) {
-	                _this.rotation = 0;
-	            }
 	            if (callback) {
 	                callback();
 	            }
 	        });
 	    };
-	    Star.prototype.boom = function (ms, distance, reset, callback) {
-	        if (reset === void 0) { reset = false; }
-	        _.forEach(this.lines, function (line) {
-	            createjs.Tween.get(line)
-	                .to({
-	                alpha: 1
-	            }, ms)
-	                .call(function () {
-	                if (reset) {
-	                    line.children[0].x = 0;
-	                    line.alpha = 0;
-	                }
-	                if (callback) {
-	                    callback();
-	                }
-	            });
-	            createjs.Tween.get(line.children[0])
-	                .to({
-	                x: distance
-	            }, ms, createjs.Ease.cubicOut);
-	        });
+	    Firefly.prototype.color = function (r, g, b) {
+	        if (r === void 0) { r = 255; }
+	        if (g === void 0) { g = 255; }
+	        if (b === void 0) { b = 255; }
+	        var shape = this.shape;
+	        var colorFilter = new createjs.ColorFilter(0, 0, 0, 1, r, g, b, 0);
+	        shape.filters = [colorFilter];
+	        shape.cache(-5, -5, 10, 10);
 	    };
-	    Star.prototype._initStar = function () {
-	        this.star = new createjs.Container();
-	        var star = new createjs.Bitmap('/images/yellow-star.png');
-	        star.x = -8;
-	        star.y = -9;
-	        this.star.addChild(star);
-	        this.addChild(this.star);
+	    Firefly.prototype.randomScale = function () {
+	        this.shape.scaleX = this.shape.scaleY = Math.random() * 0.5 + 0.5;
 	    };
-	    Star.prototype._initLines = function () {
-	        var _this = this;
-	        this.lines = [];
-	        _.times(10, function (i) {
-	            var lineContainer = new createjs.Container();
-	            var width = Math.floor(Math.random() * 5) + 5;
-	            var line = new createjs.Shape();
-	            line.graphics
-	                .beginStroke('red')
-	                .moveTo(0, 0)
-	                .lineTo(width, 0);
-	            line.x = line.y = 0;
-	            lineContainer.addChild(line);
-	            lineContainer.x = lineContainer.y = 0;
-	            lineContainer.rotation = 360 / 10 * i;
-	            lineContainer.alpha = 0;
-	            _this.addChild(lineContainer);
-	            _this.lines.push(lineContainer);
-	        });
+	    Firefly.prototype._initShape = function () {
+	        var shape = new createjs.Shape();
+	        shape.graphics
+	            .beginRadialGradientFill(['rgba(255, 255, 255, 255)', 'rgba(255, 255, 255, 0)'], [0, 1], 0, 0, 1, 0, 0, 5)
+	            .drawCircle(0, 0, 5);
+	        shape.alpha = 0.75;
+	        this.addChild(shape);
+	        this.shape = shape;
 	    };
-	    return Star;
+	    return Firefly;
 	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = Star;
+	exports.default = Firefly;
 
 
 /***/ },

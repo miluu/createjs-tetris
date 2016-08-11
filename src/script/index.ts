@@ -1,7 +1,7 @@
 /// <reference path="../../typings/index.d.ts" />
 
 import Game from './classes/Game';
-import Star from './classes/Star';
+import Firefly from './classes/Firefly';
 import config from './config';
 
 initGame();
@@ -17,19 +17,20 @@ function initGame() {
     colsCount: config.COLS_COUNT,
     rowsCount: config.ROWS_COUNT
   });
-  const star = new Star();
-  star.x = 10;
-  star.y = 10;
-  stage.addChild(star);
-  console.log(star);
   stage.addChild(game);
+  const firefly = new Firefly();
+  firefly.x = 200;
+  firefly.y = 200;
+  firefly.scaleX = firefly.scaleY = 1;
+  stage.addChild(firefly);
+  console.log(firefly);
   stage.update();
   Ticker.timingMode = Ticker.RAF;
   Ticker.on('tick', () => {
     stage.update();
   });
   (<any>window).game = game;
-  (<any>window).star = star;
+  (<any>window).star = firefly;
 }
 
 
