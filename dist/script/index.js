@@ -97,6 +97,7 @@
 	var Firefly_1 = __webpack_require__(14);
 	var _ = __webpack_require__(4);
 	var levelsStepInterval = [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30];
+	var colors = ['#fff', '#13b5b1', '#ffe058', '#8fc31f', '#eb6100', '#f19149'];
 	var Game = (function (_super) {
 	    __extends(Game, _super);
 	    function Game(options) {
@@ -396,7 +397,10 @@
 	    Game.prototype._playFirefly = function (x, y, width, height, firefliesCount) {
 	        var _this = this;
 	        _.times(firefliesCount, function (i) {
-	            var firefly = new Firefly_1.default();
+	            var cellWidth = _this._options.cellWidth;
+	            var shapeType = Math.floor(Math.random() * 4);
+	            var shapeWidth = Math.random() * cellWidth * 0.1 + cellWidth * 0.2;
+	            var firefly = new Firefly_1.default(shapeType, shapeWidth, randomColor());
 	            firefly.x = Math.round(Math.random() * width) + x;
 	            firefly.y = Math.round(Math.random() * height) + y;
 	            _this.addChild(firefly);
@@ -409,6 +413,11 @@
 	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Game;
+	function randomColor() {
+	    var len = colors.length;
+	    var r = Math.floor(Math.random() * len);
+	    return colors[r] || '#fff';
+	}
 
 
 /***/ },
@@ -17881,52 +17890,53 @@
 	};
 	var Firefly = (function (_super) {
 	    __extends(Firefly, _super);
-	    function Firefly() {
+	    function Firefly(shapeType, shapeWidth, color) {
+	        if (shapeType === void 0) { shapeType = 0; }
+	        if (shapeWidth === void 0) { shapeWidth = 8; }
+	        if (color === void 0) { color = '#fff'; }
 	        _super.call(this);
-	        this._initShape();
-	        var center = new createjs.Shape();
-	        center.graphics.
-	            beginFill('red')
-	            .drawCircle(0, 0, 1);
+	        this.shapeType = shapeType;
+	        this.shapeWidth = shapeWidth;
+	        this.color = color;
+	        this.shape = new createjs.Shape();
+	        var g = this.shape.graphics;
+	        g.beginStroke(color);
+	        switch (shapeType) {
+	            case 1:
+	                g.drawRect(-shapeWidth / 2, -shapeWidth / 2, shapeWidth, shapeWidth);
+	                break;
+	            case 2:
+	                g.moveTo(0, -shapeWidth * 2 / 3)
+	                    .lineTo(-shapeWidth / 2, shapeWidth / 3)
+	                    .lineTo(shapeWidth / 2, shapeWidth / 3)
+	                    .lineTo(0, -shapeWidth * 2 / 3);
+	                break;
+	            case 3:
+	                g.drawPolyStar(0, 0, shapeWidth / 2, 5, 0.5, 0);
+	                break;
+	            default:
+	                g.drawCircle(0, 0, shapeWidth / 2);
+	        }
+	        this.addChild(this.shape);
+	        this.rotation = Math.random() * 360;
 	    }
 	    Firefly.prototype.animate = function (ms, callback) {
-	        this.randomScale();
-	        this.color(255, 255, 0);
-	        var _a = this.shape, x = _a.x, y = _a.y;
-	        var y1 = y - Math.random() * 4 - 4;
-	        var t = Math.random() * 100 + ms - 50;
+	        var _a = this, x = _a.x, y = _a.y, rotation = _a.rotation;
+	        var y1 = y - Math.random() * 5 - 5;
+	        var rotation1 = rotation + Math.random() * 45 + 30;
 	        createjs.Tween
-	            .get(this.shape)
+	            .get(this)
+	            .wait(Math.random() * ms / 5)
 	            .to({
 	            y: y1,
-	            alpha: 0
-	        }, t, createjs.Ease.linear)
+	            alpha: 0,
+	            rotation: rotation1
+	        }, ms, createjs.Ease.linear)
 	            .call(function () {
 	            if (callback) {
 	                callback();
 	            }
 	        });
-	    };
-	    Firefly.prototype.color = function (r, g, b) {
-	        if (r === void 0) { r = 255; }
-	        if (g === void 0) { g = 255; }
-	        if (b === void 0) { b = 255; }
-	        var shape = this.shape;
-	        var colorFilter = new createjs.ColorFilter(0, 0, 0, 1, r, g, b, 0);
-	        shape.filters = [colorFilter];
-	        shape.cache(-5, -5, 10, 10);
-	    };
-	    Firefly.prototype.randomScale = function () {
-	        this.shape.scaleX = this.shape.scaleY = Math.random() * 0.5 + 0.5;
-	    };
-	    Firefly.prototype._initShape = function () {
-	        var shape = new createjs.Shape();
-	        shape.graphics
-	            .beginRadialGradientFill(['rgba(255, 255, 255, 255)', 'rgba(255, 255, 255, 0)'], [0, 1], 0, 0, 1, 0, 0, 5)
-	            .drawCircle(0, 0, 5);
-	        shape.alpha = 0.75;
-	        this.addChild(shape);
-	        this.shape = shape;
 	    };
 	    return Firefly;
 	}(createjs.Container));

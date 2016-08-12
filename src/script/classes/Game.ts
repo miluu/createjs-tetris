@@ -44,6 +44,7 @@ interface IRecord {
 }
 
 const levelsStepInterval: number[] = [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30];
+const colors: string[] = ['#fff', '#13b5b1', '#ffe058', '#8fc31f', '#eb6100', '#f19149'];
 
 export default class Game extends createjs.Container {
   private _level: number;
@@ -349,7 +350,10 @@ export default class Game extends createjs.Container {
   }
   private _playFirefly(x: number, y: number, width: number, height: number, firefliesCount: number) {
     _.times(firefliesCount, (i) => {
-      const firefly = new Firefly();
+      const {cellWidth} = this._options;
+      const shapeType = Math.floor(Math.random() * 4);
+      const shapeWidth = Math.random() * cellWidth * 0.1 + cellWidth * 0.2;
+      const firefly = new Firefly(shapeType, shapeWidth, randomColor());
       firefly.x = Math.round(Math.random() * width) + x;
       firefly.y = Math.round(Math.random() * height) + y;
       this.addChild(firefly);
@@ -358,4 +362,10 @@ export default class Game extends createjs.Container {
       });
     });
   }
+}
+
+function randomColor() {
+  const len = colors.length;
+  const r = Math.floor(Math.random() * len);
+  return colors[r] || '#fff';
 }
