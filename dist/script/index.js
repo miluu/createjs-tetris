@@ -54,7 +54,6 @@
 	/// <reference path="../../typings/index.d.ts" />
 	"use strict";
 	var Game_1 = __webpack_require__(2);
-	var Firefly_1 = __webpack_require__(14);
 	var config_1 = __webpack_require__(15);
 	initGame();
 	function initGame() {
@@ -69,19 +68,12 @@
 	        rowsCount: config_1.default.ROWS_COUNT
 	    });
 	    stage.addChild(game);
-	    var firefly = new Firefly_1.default();
-	    firefly.x = 200;
-	    firefly.y = 200;
-	    firefly.scaleX = firefly.scaleY = 1;
-	    stage.addChild(firefly);
-	    console.log(firefly);
 	    stage.update();
 	    Ticker.timingMode = Ticker.RAF;
 	    Ticker.on('tick', function () {
 	        stage.update();
 	    });
 	    window.game = game;
-	    window.star = firefly;
 	}
 
 
@@ -403,19 +395,6 @@
 	    };
 	    Game.prototype._playFirefly = function (x, y, width, height, firefliesCount) {
 	        var _this = this;
-	        // const stars: Star[] = [];
-	        // _.times(starCount, (i) => {
-	        //   const star = new Star();
-	        //   star.x = Math.round(Math.random() * width) + x;
-	        //   star.y = Math.round(Math.random() * height) + y;
-	        //   stars.push(star);
-	        //   this.wait(i, false, () => {
-	        //     this.addChild(star);
-	        //     this.wait(16, false, () => {
-	        //       this.removeChild(star);
-	        //     });
-	        //   });
-	        // });
 	        _.times(firefliesCount, function (i) {
 	            var firefly = new Firefly_1.default();
 	            firefly.x = Math.round(Math.random() * width) + x;
@@ -507,8 +486,10 @@
 	        var blockMapPositiion = this._activeBlockToMapPostion();
 	        var colsDistance = [];
 	        var groupedPos = _.groupBy(blockMapPositiion, 'col');
-	        var _a = this._activeBlock, x = _a.x, y = _a.y;
+	        // const {x, y} = this._activeBlock;
 	        var width = this._activeBlock.getRealShapeInfo().width;
+	        var minLeft = _.minBy(blockMapPositiion, 'col').col;
+	        var minTop = _.minBy(blockMapPositiion, 'row').row;
 	        _.forIn(groupedPos, function (colPos) {
 	            var bottomPosition = _.maxBy(colPos, 'row');
 	            var mapColTop = _this._getColTop(bottomPosition.col, bottomPosition.row);
@@ -519,8 +500,8 @@
 	        this._activeBlockPosition.row = row + moveSteps;
 	        this._updateActiveBlockPosition();
 	        return {
-	            x: x,
-	            y: y,
+	            x: minLeft * this._cellWidth,
+	            y: minTop * this._cellWidth,
 	            width: width * this._cellWidth,
 	            height: moveSteps * this._cellWidth
 	        };

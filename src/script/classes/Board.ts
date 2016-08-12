@@ -81,8 +81,10 @@ export default class Board extends createjs.Container {
     const blockMapPositiion = this._activeBlockToMapPostion();
     const colsDistance: number[] = [];
     const groupedPos = _.groupBy(blockMapPositiion, 'col');
-    const {x, y} = this._activeBlock;
+    // const {x, y} = this._activeBlock;
     const {width} = this._activeBlock.getRealShapeInfo();
+    const minLeft = _.minBy(blockMapPositiion, 'col').col;
+    const minTop = _.minBy(blockMapPositiion, 'row').row;
     _.forIn(groupedPos, (colPos: IMapPosition[]) => {
       const bottomPosition = _.maxBy(colPos, 'row');
       const mapColTop = this._getColTop(bottomPosition.col, bottomPosition.row);
@@ -93,8 +95,8 @@ export default class Board extends createjs.Container {
     this._activeBlockPosition.row = row + moveSteps;
     this._updateActiveBlockPosition();
     return {
-      x,
-      y,
+      x: minLeft * this._cellWidth,
+      y: minTop * this._cellWidth,
       width: width * this._cellWidth,
       height: moveSteps * this._cellWidth
     };

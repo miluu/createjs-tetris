@@ -348,19 +348,6 @@ export default class Game extends createjs.Container {
     };
   }
   private _playFirefly(x: number, y: number, width: number, height: number, firefliesCount: number) {
-    // const stars: Star[] = [];
-    // _.times(starCount, (i) => {
-    //   const star = new Star();
-    //   star.x = Math.round(Math.random() * width) + x;
-    //   star.y = Math.round(Math.random() * height) + y;
-    //   stars.push(star);
-    //   this.wait(i, false, () => {
-    //     this.addChild(star);
-    //     this.wait(16, false, () => {
-    //       this.removeChild(star);
-    //     });
-    //   });
-    // });
     _.times(firefliesCount, (i) => {
       const firefly = new Firefly();
       firefly.x = Math.round(Math.random() * width) + x;

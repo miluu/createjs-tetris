@@ -18,19 +18,12 @@ function initGame() {
     rowsCount: config.ROWS_COUNT
   });
   stage.addChild(game);
-  const firefly = new Firefly();
-  firefly.x = 200;
-  firefly.y = 200;
-  firefly.scaleX = firefly.scaleY = 1;
-  stage.addChild(firefly);
-  console.log(firefly);
   stage.update();
   Ticker.timingMode = Ticker.RAF;
   Ticker.on('tick', () => {
     stage.update();
   });
   (<any>window).game = game;
-  (<any>window).star = firefly;
 }
 
 
