@@ -214,7 +214,8 @@ export default class Game extends createjs.Container {
       }
       const {x, y, width, height} = this._board.fallDown();
       this._playFirefly(x + this._board.x - 6, y + this._board.y - 6, width, height, width * height / Math.pow(this._options.cellWidth, 2) * 1);
-      this._nextRound();
+      // this._blockBoom();
+      this._nextRound(true);
     };
     this._keyController.onKeydown.up = () => {
       if (!this._isStarted || this._isPaused || this._isFrozen) {
@@ -266,7 +267,7 @@ export default class Game extends createjs.Container {
       }
     }
   }
-  private _nextRound() {
+  private _nextRound(fallDown: boolean = false) {
     const outRangeCellsPos = this._board.blockToMap();
     if (outRangeCellsPos.length) {
       this._gameOver();
@@ -281,10 +282,15 @@ export default class Game extends createjs.Container {
     if (rows.length) {
       hasClearLines = true;
     }
+    if (!fallDown) {
+      this._blockBoom();
+    }
+    this._board.activeBlock.static();
     this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), true);
     this.wait(this.msToFrames(ms), false, () => {
       this._board.resetActiveBlock(this._nextBlocks.next());
       this._board.resetActiveBlockPos();
+      this._board.activeBlock.acitve();
       this._board.resetRow(rows);
       this._record.blockCount++;
       this._record.blockCountByTypes[blockInfo.blockType]++;
@@ -357,6 +363,22 @@ export default class Game extends createjs.Container {
       firefly.y = Math.round(Math.random() * height) + y;
       this.addChild(firefly);
       firefly.animate(500, () => {
+        this.removeChild(firefly);
+      });
+    });
+  }
+  private _blockBoom() {
+    const {x, y} = this._board.getActiveBlockCenterPos();
+    const count = 15;
+    _.times(count, (i) => {
+      const {cellWidth} = this._options;
+      const shapeType = Math.floor(Math.random() * 4);
+      const shapeWidth = Math.random() * cellWidth * 0.1 + cellWidth * 0.2;
+      const firefly = new Firefly(shapeType, shapeWidth, randomColor());
+      firefly.x = x + this._board.x;
+      firefly.y = y + this._board.y;
+      this.addChild(firefly);
+      firefly.boom(360 / count * i, 300, this._options.cellWidth * 2, () => {
         this.removeChild(firefly);
       });
     });

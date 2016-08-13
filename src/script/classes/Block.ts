@@ -35,6 +35,18 @@ export default class Block extends createjs.Container {
     this.blockRotation = blockRotation;
   }
 
+  public acitve() {
+    _.forEach(this.cells, (cell) => {
+      cell.active();
+    });
+  }
+
+  public static() {
+    _.forEach(this.cells, (cell) => {
+      cell.static();
+    });
+  }
+
   public getRealShapeInfo() {
     const rotationShape = this.getRotationShape();
     const minX = _.minBy(rotationShape, 'x').x;
@@ -87,6 +99,7 @@ export default class Block extends createjs.Container {
     const cells: Cell[] = [];
     _.times(4, () => {
       const cell = new Cell(this._cellWidth);
+      cell.active();
       cells.push(cell);
       this.addChild(cell);
     });

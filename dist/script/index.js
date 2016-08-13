@@ -255,7 +255,8 @@
 	            }
 	            var _a = _this._board.fallDown(), x = _a.x, y = _a.y, width = _a.width, height = _a.height;
 	            _this._playFirefly(x + _this._board.x - 6, y + _this._board.y - 6, width, height, width * height / Math.pow(_this._options.cellWidth, 2) * 1);
-	            _this._nextRound();
+	            // this._blockBoom();
+	            _this._nextRound(true);
 	        };
 	        this._keyController.onKeydown.up = function () {
 	            if (!_this._isStarted || _this._isPaused || _this._isFrozen) {
@@ -309,8 +310,9 @@
 	            }
 	        }
 	    };
-	    Game.prototype._nextRound = function () {
+	    Game.prototype._nextRound = function (fallDown) {
 	        var _this = this;
+	        if (fallDown === void 0) { fallDown = false; }
 	        var outRangeCellsPos = this._board.blockToMap();
 	        if (outRangeCellsPos.length) {
 	            this._gameOver();
@@ -325,10 +327,15 @@
 	        if (rows.length) {
 	            hasClearLines = true;
 	        }
+	        if (!fallDown) {
+	            this._blockBoom();
+	        }
+	        this._board.activeBlock.static();
 	        this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), true);
 	        this.wait(this.msToFrames(ms), false, function () {
 	            _this._board.resetActiveBlock(_this._nextBlocks.next());
 	            _this._board.resetActiveBlockPos();
+	            _this._board.activeBlock.acitve();
 	            _this._board.resetRow(rows);
 	            _this._record.blockCount++;
 	            _this._record.blockCountByTypes[blockInfo.blockType]++;
@@ -409,6 +416,23 @@
 	            });
 	        });
 	    };
+	    Game.prototype._blockBoom = function () {
+	        var _this = this;
+	        var _a = this._board.getActiveBlockCenterPos(), x = _a.x, y = _a.y;
+	        var count = 15;
+	        _.times(count, function (i) {
+	            var cellWidth = _this._options.cellWidth;
+	            var shapeType = Math.floor(Math.random() * 4);
+	            var shapeWidth = Math.random() * cellWidth * 0.1 + cellWidth * 0.2;
+	            var firefly = new Firefly_1.default(shapeType, shapeWidth, randomColor());
+	            firefly.x = x + _this._board.x;
+	            firefly.y = y + _this._board.y;
+	            _this.addChild(firefly);
+	            firefly.boom(360 / count * i, 300, _this._options.cellWidth * 2, function () {
+	                _this.removeChild(firefly);
+	            });
+	        });
+	    };
 	    Game.prototype._clearHoldBlock = function () {
 	        this._holdBlock.clear();
 	    };
@@ -438,9 +462,6 @@
 	var _ = __webpack_require__(4);
 	var Cell_1 = __webpack_require__(6);
 	var Block_1 = __webpack_require__(7);
-	var activeBlockFilter = [
-	    new createjs.ColorFilter(0, 0, 0, 1, 44, 72, 111, 0)
-	];
 	var Board = (function (_super) {
 	    __extends(Board, _super);
 	    function Board(_cellWidth, _colsCount, _rowsCount) {
@@ -454,8 +475,8 @@
 	        this._init();
 	    }
 	    Board.prototype.resetActiveBlock = function (blockInfo) {
-	        this._activeBlock.blockRotation = blockInfo.blockRotation;
-	        this._activeBlock.blockType = blockInfo.blockType;
+	        this.activeBlock.blockRotation = blockInfo.blockRotation;
+	        this.activeBlock.blockType = blockInfo.blockType;
 	        this.resetActiveBlockPos();
 	        this.showActiveBlock();
 	    };
@@ -463,10 +484,10 @@
 	        this._initActiveBlockPosition();
 	    };
 	    Board.prototype.showActiveBlock = function () {
-	        this._activeBlock.visible = true;
+	        this.activeBlock.visible = true;
 	    };
 	    Board.prototype.hideActiveBlock = function () {
-	        this._activeBlock.visible = false;
+	        this.activeBlock.visible = false;
 	    };
 	    Board.prototype.getWidth = function () {
 	        return this._cellWidth * this._colsCount;
@@ -499,8 +520,7 @@
 	        var blockMapPositiion = this._activeBlockToMapPostion();
 	        var colsDistance = [];
 	        var groupedPos = _.groupBy(blockMapPositiion, 'col');
-	        // const {x, y} = this._activeBlock;
-	        var width = this._activeBlock.getRealShapeInfo().width;
+	        var width = this.activeBlock.getRealShapeInfo().width;
 	        var minLeft = _.minBy(blockMapPositiion, 'col').col;
 	        var minTop = _.minBy(blockMapPositiion, 'row').row;
 	        _.forIn(groupedPos, function (colPos) {
@@ -521,7 +541,7 @@
 	    };
 	    Board.prototype.blockToMap = function (blockInfo, blockPosition) {
 	        var _this = this;
-	        if (blockInfo === void 0) { blockInfo = this._activeBlock.getBlockInfo(); }
+	        if (blockInfo === void 0) { blockInfo = this.activeBlock.getBlockInfo(); }
 	        if (blockPosition === void 0) { blockPosition = this._activeBlockPosition; }
 	        var outRangeCellPos = [];
 	        var blockCellsMapPosition = this._activeBlockToMapPostion(blockPosition);
@@ -576,13 +596,23 @@
 	    Board.prototype.clear = function () {
 	        this._initMap();
 	        this._updateMapView();
-	        this._activeBlock.blockType = Block_1.default.randomType();
-	        this._activeBlock.blockRotation = Block_1.default.randomRotation();
+	        this.activeBlock.blockType = Block_1.default.randomType();
+	        this.activeBlock.blockRotation = Block_1.default.randomRotation();
 	        this._initActiveBlockPosition();
 	        this._updateActiveBlockPosition();
 	    };
 	    Board.prototype.getActiveBlockInfo = function () {
-	        return this._activeBlock.getBlockInfo();
+	        return this.activeBlock.getBlockInfo();
+	    };
+	    Board.prototype.getActiveBlockCenterPos = function () {
+	        var posArr = this._activeBlockToMapPostion();
+	        var maxCol = _.maxBy(posArr, 'col').col;
+	        var minCol = _.minBy(posArr, 'col').col;
+	        var maxRow = _.maxBy(posArr, 'row').row;
+	        var minRow = _.minBy(posArr, 'row').row;
+	        var x = ((maxCol - minCol + 1) / 2 + minCol) * this._cellWidth;
+	        var y = ((maxRow - minRow + 1) / 2 + minRow) * this._cellWidth;
+	        return { x: x, y: y };
 	    };
 	    Object.defineProperty(Board.prototype, "map", {
 	        get: function () {
@@ -597,7 +627,7 @@
 	    });
 	    Object.defineProperty(Board.prototype, "activeBlockRotation", {
 	        get: function () {
-	            return this._activeBlock.blockRotation;
+	            return this.activeBlock.blockRotation;
 	        },
 	        set: function (blockRotation) {
 	            var _this = this;
@@ -621,7 +651,7 @@
 	            if (!canMove) {
 	                return;
 	            }
-	            this._activeBlock.blockRotation = blockRotation;
+	            this.activeBlock.blockRotation = blockRotation;
 	            this._activeBlockPosition = newBlockPosition;
 	            this._updateActiveBlockPosition();
 	        },
@@ -636,19 +666,11 @@
 	        this._updateMapView();
 	    };
 	    Board.prototype._initActiveBlock = function () {
-	        this._activeBlock = new Block_1.default(this._cellWidth);
-	        this._activeBlock.mask = this._bg;
+	        this.activeBlock = new Block_1.default(this._cellWidth);
+	        this.activeBlock.mask = this._bg;
 	        this._initActiveBlockPosition();
 	        this._updateActiveBlockPosition();
-	        this._setActiveBlockFilter();
-	        this.addChild(this._activeBlock);
-	    };
-	    Board.prototype._setActiveBlockFilter = function () {
-	        var _this = this;
-	        _.forEach(this._activeBlock.cells, function (cell) {
-	            cell.filters = activeBlockFilter;
-	            cell.cache(0, 0, _this._cellWidth, _this._cellWidth);
-	        });
+	        this.addChild(this.activeBlock);
 	    };
 	    Board.prototype._initBg = function () {
 	        this._bg = new createjs.Shape();
@@ -673,6 +695,7 @@
 	            var cellsRow = [];
 	            _.times(_this._colsCount, function (col) {
 	                var cell = new Cell_1.default(_this._cellWidth);
+	                cell.static();
 	                cell.x = col * _this._cellWidth;
 	                cell.y = row * _this._cellWidth;
 	                _this.addChild(cell);
@@ -707,12 +730,12 @@
 	        var _a = this._activeBlockPosition, col = _a.col, row = _a.row;
 	        var x = col * this._cellWidth;
 	        var y = row * this._cellWidth;
-	        this._activeBlock.x = x;
-	        this._activeBlock.y = y;
+	        this.activeBlock.x = x;
+	        this.activeBlock.y = y;
 	    };
 	    Board.prototype._activeBlockToMapPostion = function (position, rotationShape) {
 	        if (position === void 0) { position = this._activeBlockPosition; }
-	        if (rotationShape === void 0) { rotationShape = this._activeBlock.getRotationShape(); }
+	        if (rotationShape === void 0) { rotationShape = this.activeBlock.getRotationShape(); }
 	        var ret = [];
 	        _.forEach(rotationShape, function (cellPos) {
 	            ret.push({
@@ -742,9 +765,9 @@
 	    };
 	    Board.prototype._canMoveTo = function (position, blockRotation) {
 	        var _this = this;
-	        if (blockRotation === void 0) { blockRotation = this._activeBlock.blockRotation; }
+	        if (blockRotation === void 0) { blockRotation = this.activeBlock.blockRotation; }
 	        var canMove = true;
-	        var blockMapPosition = this._activeBlockToMapPostion(position, this._activeBlock.getRotationShape(blockRotation));
+	        var blockMapPosition = this._activeBlockToMapPostion(position, this.activeBlock.getRotationShape(blockRotation));
 	        _.forEach(blockMapPosition, function (mapPos) {
 	            var col = mapPos.col, row = mapPos.row;
 	            if (_.get(_this.map, "[" + row + "][" + col + "]") === 1 || col < 0 || col > _this._colsCount - 1 || row > _this._rowsCount - 1) {
@@ -17217,16 +17240,34 @@
 	    function Cell(cellWidth) {
 	        _super.call(this);
 	        this.cellWidth = cellWidth;
-	        this.init();
+	        this._originCellWidth = 60;
+	        this._init();
 	    }
-	    Cell.prototype.init = function () {
-	        var shapeWidth = this.cellWidth - 4;
-	        this.graphics
-	            .beginFill('#000')
-	            .drawRect(2, 2, shapeWidth, shapeWidth);
+	    Cell.prototype.active = function () {
+	        this.status = 'active';
+	        this.sprite.gotoAndStop('active');
+	    };
+	    Cell.prototype.static = function () {
+	        this.status = 'static';
+	        this.sprite.gotoAndStop('static');
+	    };
+	    Cell.prototype._init = function () {
+	        var sheet = new createjs.SpriteSheet({
+	            images: ['/images/cell.png'],
+	            frames: { width: 60, height: 60 },
+	            animations: {
+	                active: 0,
+	                static: 1
+	            }
+	        });
+	        var sprite = new createjs.Sprite(sheet, 'active');
+	        sprite.scaleX = sprite.scaleY = this.cellWidth / this._originCellWidth;
+	        this._spriteSheet = sheet;
+	        this.sprite = sprite;
+	        this.addChild(sprite);
 	    };
 	    return Cell;
-	}(createjs.Shape));
+	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Cell;
 
@@ -17261,6 +17302,16 @@
 	        }
 	        this.blockRotation = blockRotation;
 	    }
+	    Block.prototype.acitve = function () {
+	        _.forEach(this.cells, function (cell) {
+	            cell.active();
+	        });
+	    };
+	    Block.prototype.static = function () {
+	        _.forEach(this.cells, function (cell) {
+	            cell.static();
+	        });
+	    };
 	    Block.prototype.getRealShapeInfo = function () {
 	        var rotationShape = this.getRotationShape();
 	        var minX = _.minBy(rotationShape, 'x').x;
@@ -17319,6 +17370,7 @@
 	        var cells = [];
 	        _.times(4, function () {
 	            var cell = new cell_1.default(_this._cellWidth);
+	            cell.active();
 	            cells.push(cell);
 	            _this.addChild(cell);
 	        });
@@ -17423,16 +17475,34 @@
 	    function Cell(cellWidth) {
 	        _super.call(this);
 	        this.cellWidth = cellWidth;
-	        this.init();
+	        this._originCellWidth = 60;
+	        this._init();
 	    }
-	    Cell.prototype.init = function () {
-	        var shapeWidth = this.cellWidth - 4;
-	        this.graphics
-	            .beginFill('#000')
-	            .drawRect(2, 2, shapeWidth, shapeWidth);
+	    Cell.prototype.active = function () {
+	        this.status = 'active';
+	        this.sprite.gotoAndStop('active');
+	    };
+	    Cell.prototype.static = function () {
+	        this.status = 'static';
+	        this.sprite.gotoAndStop('static');
+	    };
+	    Cell.prototype._init = function () {
+	        var sheet = new createjs.SpriteSheet({
+	            images: ['/images/cell.png'],
+	            frames: { width: 60, height: 60 },
+	            animations: {
+	                active: 0,
+	                static: 1
+	            }
+	        });
+	        var sprite = new createjs.Sprite(sheet, 'active');
+	        sprite.scaleX = sprite.scaleY = this.cellWidth / this._originCellWidth;
+	        this._spriteSheet = sheet;
+	        this.sprite = sprite;
+	        this.addChild(sprite);
 	    };
 	    return Cell;
-	}(createjs.Shape));
+	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Cell;
 
@@ -17939,6 +18009,36 @@
 	            y: y1,
 	            alpha: 0,
 	            rotation: rotation1
+	        }, ms, createjs.Ease.linear)
+	            .call(function () {
+	            if (callback) {
+	                callback();
+	            }
+	        });
+	    };
+	    Firefly.prototype.boom = function (rotation, ms, distance, callback) {
+	        if (rotation === void 0) { rotation = 0; }
+	        this.rotation = rotation;
+	        // const rotation1 = rotation + 360;
+	        var _a = this.shape, x = _a.x, y = _a.y;
+	        var shapeRotation = this.shape.rotation;
+	        var shapeRotation1 = this.shape.rotation + 3 * 360;
+	        var x1 = x + distance;
+	        this.shape.alpha = 0;
+	        // createjs.Tween
+	        //   .get(this)
+	        //   .to({
+	        //     rotation: rotation1
+	        //   }, ms * 2, createjs.Ease.circOut);
+	        createjs.Tween
+	            .get(this.shape)
+	            .to({
+	            x: x1,
+	            alpha: 1,
+	            rotation: shapeRotation1
+	        }, ms, createjs.Ease.circOut)
+	            .to({
+	            alpha: 0
 	        }, ms, createjs.Ease.linear)
 	            .call(function () {
 	            if (callback) {

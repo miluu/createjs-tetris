@@ -27,7 +27,7 @@ export default class Firefly extends createjs.Container {
     this.addChild(this.shape);
     this.rotation = Math.random() * 360;
   }
-  public animate(ms: number, callback?: () => void) {
+  public animate(ms: number, callback?: () => any) {
     const {x, y, rotation} = this;
     const y1 = y - Math.random() * 5 - 5;
     const rotation1 = rotation + Math.random() * 45 + 30;
@@ -38,6 +38,35 @@ export default class Firefly extends createjs.Container {
         y: y1,
         alpha: 0,
         rotation: rotation1
+      }, ms, createjs.Ease.linear)
+      .call(() => {
+        if (callback) {
+          callback();
+        }
+      });
+  }
+  public boom(rotation: number = 0, ms: number, distance: number, callback?: () => any) {
+    this.rotation = rotation;
+    // const rotation1 = rotation + 360;
+    const {x, y} = this.shape;
+    const shapeRotation = this.shape.rotation;
+    const shapeRotation1 = this.shape.rotation + 3 * 360;
+    const x1 = x + distance;
+    this.shape.alpha = 0;
+    // createjs.Tween
+    //   .get(this)
+    //   .to({
+    //     rotation: rotation1
+    //   }, ms * 2, createjs.Ease.circOut);
+    createjs.Tween
+      .get(this.shape)
+      .to({
+        x: x1,
+        alpha: 1,
+        rotation: shapeRotation1
+      }, ms, createjs.Ease.circOut)
+      .to({
+        alpha: 0
       }, ms, createjs.Ease.linear)
       .call(() => {
         if (callback) {
