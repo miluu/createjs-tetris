@@ -96,8 +96,7 @@
 	var KeyController_1 = __webpack_require__(13);
 	var Firefly_1 = __webpack_require__(14);
 	var _ = __webpack_require__(4);
-	var levelsStepInterval = [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30];
-	var colors = ['#fff', '#13b5b1', '#ffe058', '#8fc31f', '#eb6100', '#f19149'];
+	var config_1 = __webpack_require__(15);
 	var Game = (function (_super) {
 	    __extends(Game, _super);
 	    function Game(options) {
@@ -150,6 +149,7 @@
 	        this._nextBlocks
 	            .refreshBlocks()
 	            .showBlocks();
+	        this._clearHoldBlock();
 	        this._autoFall();
 	    };
 	    Game.prototype.setHoldBoard = function (options) {
@@ -284,7 +284,7 @@
 	    Game.prototype._setLevelFrames = function () {
 	        var _this = this;
 	        this._levelFrames = [];
-	        _.forEach(levelsStepInterval, function (stepInterval) {
+	        _.forEach(config_1.default.LevelsStepInterval, function (stepInterval) {
 	            var frames = _this.msToFrames(stepInterval);
 	            _this._levelFrames.push(frames);
 	        });
@@ -409,14 +409,18 @@
 	            });
 	        });
 	    };
+	    Game.prototype._clearHoldBlock = function () {
+	        this._holdBlock.clear();
+	    };
 	    return Game;
 	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Game;
 	function randomColor() {
-	    var len = colors.length;
+	    var Colors = config_1.default.Colors;
+	    var len = Colors.length;
 	    var r = Math.floor(Math.random() * len);
-	    return colors[r] || '#fff';
+	    return Colors[r] || '#fff';
 	}
 
 
@@ -17472,6 +17476,10 @@
 	        this._blockInfo = blockInfo;
 	        return holdBlockInfo;
 	    };
+	    HoldBlock.prototype.clear = function () {
+	        this._blockBoard.hideBlock();
+	        this._blockInfo = null;
+	    };
 	    HoldBlock.prototype._init = function () {
 	        this._initBlockBoard();
 	        this._initTitle();
@@ -17953,7 +17961,9 @@
 	exports.default = {
 	    CELL_WIDTH: 30,
 	    COLS_COUNT: 10,
-	    ROWS_COUNT: 20
+	    ROWS_COUNT: 20,
+	    LevelsStepInterval: [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30],
+	    Colors: ['#fff', '#FF0033', '#FF9900', '#FFFF00', '#99CC00', '#66CCCC', '#0099CC', '#9966CC']
 	};
 
 

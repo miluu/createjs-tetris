@@ -33,6 +33,11 @@ export default class HoldBlock extends createjs.Container {
     return holdBlockInfo;
   }
 
+  clear() {
+    this._blockBoard.hideBlock();
+    this._blockInfo = null;
+  }
+
   private _init() {
     this._initBlockBoard();
     this._initTitle();

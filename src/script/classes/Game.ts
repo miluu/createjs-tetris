@@ -9,6 +9,7 @@ import KeyController from './KeyController';
 import Star from './Star';
 import Firefly from './Firefly';
 import * as _ from 'lodash';
+import config from '../config';
 
 interface IGameOptions {
   cellWidth?: number;
@@ -42,9 +43,6 @@ interface IRecord {
     [blockType: string]: number;
   };
 }
-
-const levelsStepInterval: number[] = [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30];
-const colors: string[] = ['#fff', '#13b5b1', '#ffe058', '#8fc31f', '#eb6100', '#f19149'];
 
 export default class Game extends createjs.Container {
   private _level: number;
@@ -115,6 +113,7 @@ export default class Game extends createjs.Container {
     this._nextBlocks
       .refreshBlocks()
       .showBlocks();
+    this._clearHoldBlock();
     this._autoFall();
   }
   public setHoldBoard(options: IScale & IPosition) {
@@ -242,7 +241,7 @@ export default class Game extends createjs.Container {
   }
   private _setLevelFrames() {
     this._levelFrames = [];
-    _.forEach(levelsStepInterval, (stepInterval) => {
+    _.forEach(config.LevelsStepInterval, (stepInterval) => {
       const frames = this.msToFrames(stepInterval);
       this._levelFrames.push(frames);
     });
@@ -362,10 +361,14 @@ export default class Game extends createjs.Container {
       });
     });
   }
+  private _clearHoldBlock() {
+    this._holdBlock.clear();
+  }
 }
 
 function randomColor() {
-  const len = colors.length;
+  const {Colors} = config;
+  const len = Colors.length;
   const r = Math.floor(Math.random() * len);
-  return colors[r] || '#fff';
+  return Colors[r] || '#fff';
 }
