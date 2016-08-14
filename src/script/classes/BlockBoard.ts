@@ -1,6 +1,7 @@
 /// <reference path="../../../typings/index.d.ts" />
 
 import Block from './Block';
+import * as utils from '../utils';
 
 export default class BlockBoard extends createjs.Container {
   block: Block;
@@ -35,7 +36,9 @@ export default class BlockBoard extends createjs.Container {
   changeRandom() {
     const randomType = Block.randomType();
     const randomRotation = Block.randomRotation();
+    const color = utils.randomColor(true);
     this.changeBlock(randomType, randomRotation);
+    this.block.color = color;
   }
 
   updateBlockPosition() {

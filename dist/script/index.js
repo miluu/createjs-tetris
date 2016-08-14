@@ -54,7 +54,7 @@
 	/// <reference path="../../typings/index.d.ts" />
 	"use strict";
 	var Game_1 = __webpack_require__(2);
-	var config_1 = __webpack_require__(15);
+	var config_1 = __webpack_require__(10);
 	initGame();
 	function initGame() {
 	    var canvas = document.getElementById('canvas');
@@ -90,13 +90,14 @@
 	};
 	var Board_1 = __webpack_require__(3);
 	var Block_1 = __webpack_require__(7);
-	var HoldBlock_1 = __webpack_require__(9);
-	var NextBlocks_1 = __webpack_require__(11);
-	var Infos_1 = __webpack_require__(12);
-	var KeyController_1 = __webpack_require__(13);
-	var Firefly_1 = __webpack_require__(14);
+	var HoldBlock_1 = __webpack_require__(11);
+	var NextBlocks_1 = __webpack_require__(13);
+	var Infos_1 = __webpack_require__(14);
+	var KeyController_1 = __webpack_require__(15);
+	var Firefly_1 = __webpack_require__(16);
 	var _ = __webpack_require__(4);
-	var config_1 = __webpack_require__(15);
+	var utils = __webpack_require__(9);
+	var config_1 = __webpack_require__(10);
 	var Game = (function (_super) {
 	    __extends(Game, _super);
 	    function Game(options) {
@@ -407,7 +408,7 @@
 	            var cellWidth = _this._options.cellWidth;
 	            var shapeType = Math.floor(Math.random() * 4);
 	            var shapeWidth = Math.random() * cellWidth * 0.1 + cellWidth * 0.2;
-	            var firefly = new Firefly_1.default(shapeType, shapeWidth, randomColor());
+	            var firefly = new Firefly_1.default(shapeType, shapeWidth, utils.randomColor());
 	            firefly.x = Math.round(Math.random() * width) + x;
 	            firefly.y = Math.round(Math.random() * height) + y;
 	            _this.addChild(firefly);
@@ -424,7 +425,7 @@
 	            var cellWidth = _this._options.cellWidth;
 	            var shapeType = Math.floor(Math.random() * 4);
 	            var shapeWidth = Math.random() * cellWidth * 0.1 + cellWidth * 0.2;
-	            var firefly = new Firefly_1.default(shapeType, shapeWidth, randomColor());
+	            var firefly = new Firefly_1.default(shapeType, shapeWidth, utils.randomColor());
 	            firefly.x = x + _this._board.x;
 	            firefly.y = y + _this._board.y;
 	            _this.addChild(firefly);
@@ -440,12 +441,6 @@
 	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Game;
-	function randomColor() {
-	    var Colors = config_1.default.Colors;
-	    var len = Colors.length;
-	    var r = Math.floor(Math.random() * len);
-	    return Colors[r] || '#fff';
-	}
 
 
 /***/ },
@@ -462,6 +457,7 @@
 	var _ = __webpack_require__(4);
 	var Cell_1 = __webpack_require__(6);
 	var Block_1 = __webpack_require__(7);
+	var utils = __webpack_require__(9);
 	var Board = (function (_super) {
 	    __extends(Board, _super);
 	    function Board(_cellWidth, _colsCount, _rowsCount) {
@@ -477,6 +473,7 @@
 	    Board.prototype.resetActiveBlock = function (blockInfo) {
 	        this.activeBlock.blockRotation = blockInfo.blockRotation;
 	        this.activeBlock.blockType = blockInfo.blockType;
+	        this.activeBlock.color = blockInfo.color;
 	        this.resetActiveBlockPos();
 	        this.showActiveBlock();
 	    };
@@ -497,12 +494,6 @@
 	    };
 	    Board.prototype.setMap = function (position, val) {
 	        var row = position.row, col = position.col;
-	        if (val !== 0 && val !== 1) {
-	            throw new Error('val can only be 0 or 1.');
-	        }
-	        if (row > this._rowsCount - 1 || row < 0 || col > this._colsCount || col < 0) {
-	            throw new Error("Out of map's range.");
-	        }
 	        this._map[row][col] = val;
 	        this._updateMapView();
 	    };
@@ -547,7 +538,7 @@
 	        var blockCellsMapPosition = this._activeBlockToMapPostion(blockPosition);
 	        _.forEach(blockCellsMapPosition, function (pos) {
 	            if (_this.isInRange(pos)) {
-	                _this.setMap(pos, 1);
+	                _this.setMap(pos, blockInfo.color || 1);
 	            }
 	            else {
 	                outRangeCellPos.push(pos);
@@ -598,6 +589,7 @@
 	        this._updateMapView();
 	        this.activeBlock.blockType = Block_1.default.randomType();
 	        this.activeBlock.blockRotation = Block_1.default.randomRotation();
+	        this.activeBlock.color = utils.randomColor(true);
 	        this._initActiveBlockPosition();
 	        this._updateActiveBlockPosition();
 	    };
@@ -709,9 +701,19 @@
 	        _.forEach(this._map, function (mapRow, row) {
 	            _.forEach(mapRow, function (cellState, col) {
 	                var cell = _this._cells[row][col];
-	                cell.alpha = cellState === 0
-	                    ? 0.1
-	                    : 1;
+	                if (!cellState) {
+	                    cell.alpha = 0.05;
+	                    cell.color = null;
+	                }
+	                else {
+	                    cell.alpha = 1;
+	                    if (typeof cellState === 'string') {
+	                        cell.color = cellState;
+	                    }
+	                    else {
+	                        cell.color = null;
+	                    }
+	                }
 	            });
 	        });
 	    };
@@ -770,7 +772,7 @@
 	        var blockMapPosition = this._activeBlockToMapPostion(position, this.activeBlock.getRotationShape(blockRotation));
 	        _.forEach(blockMapPosition, function (mapPos) {
 	            var col = mapPos.col, row = mapPos.row;
-	            if (_.get(_this.map, "[" + row + "][" + col + "]") === 1 || col < 0 || col > _this._colsCount - 1 || row > _this._rowsCount - 1) {
+	            if (_.get(_this.map, "[" + row + "][" + col + "]") || col < 0 || col > _this._colsCount - 1 || row > _this._rowsCount - 1) {
 	                canMove = false;
 	                return false;
 	            }
@@ -784,7 +786,7 @@
 	            if (row < fromRow) {
 	                return;
 	            }
-	            if (colCells[col] === 1) {
+	            if (colCells[col]) {
 	                ret.row = row - 1;
 	                return false;
 	            }
@@ -17251,6 +17253,28 @@
 	        this.status = 'static';
 	        this.sprite.gotoAndStop('static');
 	    };
+	    Object.defineProperty(Cell.prototype, "color", {
+	        get: function () {
+	            return this._color;
+	        },
+	        set: function (color) {
+	            this.removeChild(this._colorLayer);
+	            if (!color) {
+	                this._color = null;
+	                this._colorLayer = null;
+	            }
+	            this._color = color;
+	            var shape = new createjs.Shape();
+	            shape.graphics
+	                .beginFill(color)
+	                .drawRect(1, 1, 28, 28);
+	            shape.compositeOperation = 'color';
+	            this._colorLayer = shape;
+	            this.addChild(shape);
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
 	    Cell.prototype._init = function () {
 	        var sheet = new createjs.SpriteSheet({
 	            images: ['/images/cell.png'],
@@ -17265,6 +17289,8 @@
 	        this._spriteSheet = sheet;
 	        this.sprite = sprite;
 	        this.addChild(sprite);
+	        this._color = null;
+	        this._colorLayer = null;
 	    };
 	    return Cell;
 	}(createjs.Container));
@@ -17301,6 +17327,7 @@
 	            blockRotation = Block.randomRotation();
 	        }
 	        this.blockRotation = blockRotation;
+	        this._color = null;
 	    }
 	    Block.prototype.acitve = function () {
 	        _.forEach(this.cells, function (cell) {
@@ -17329,6 +17356,7 @@
 	        return {
 	            blockType: this.blockType,
 	            blockRotation: this.blockRotation,
+	            color: this.color
 	        };
 	    };
 	    Block.prototype.getRotationShape = function (blockRotation) {
@@ -17365,6 +17393,20 @@
 	        configurable: true
 	    });
 	    ;
+	    Object.defineProperty(Block.prototype, "color", {
+	        get: function () {
+	            return this._color;
+	        },
+	        set: function (color) {
+	            var _this = this;
+	            this._color = color || null;
+	            _.forEach(this.cells, function (cell) {
+	                cell.color = _this._color;
+	            });
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
 	    Block.prototype._buildCells = function () {
 	        var _this = this;
 	        var cells = [];
@@ -17486,6 +17528,28 @@
 	        this.status = 'static';
 	        this.sprite.gotoAndStop('static');
 	    };
+	    Object.defineProperty(Cell.prototype, "color", {
+	        get: function () {
+	            return this._color;
+	        },
+	        set: function (color) {
+	            this.removeChild(this._colorLayer);
+	            if (!color) {
+	                this._color = null;
+	                this._colorLayer = null;
+	            }
+	            this._color = color;
+	            var shape = new createjs.Shape();
+	            shape.graphics
+	                .beginFill(color)
+	                .drawRect(1, 1, 28, 28);
+	            shape.compositeOperation = 'color';
+	            this._colorLayer = shape;
+	            this.addChild(shape);
+	        },
+	        enumerable: true,
+	        configurable: true
+	    });
 	    Cell.prototype._init = function () {
 	        var sheet = new createjs.SpriteSheet({
 	            images: ['/images/cell.png'],
@@ -17500,6 +17564,8 @@
 	        this._spriteSheet = sheet;
 	        this.sprite = sprite;
 	        this.addChild(sprite);
+	        this._color = null;
+	        this._colorLayer = null;
 	    };
 	    return Cell;
 	}(createjs.Container));
@@ -17511,6 +17577,41 @@
 /* 9 */
 /***/ function(module, exports, __webpack_require__) {
 
+	"use strict";
+	var config_1 = __webpack_require__(10);
+	var Colors = config_1.default.Colors;
+	function randomColor(withoutFirst) {
+	    if (withoutFirst === void 0) { withoutFirst = false; }
+	    var c = Colors;
+	    if (withoutFirst) {
+	        c = c.slice(1);
+	    }
+	    var len = c.length;
+	    var r = Math.floor(Math.random() * len);
+	    return c[r];
+	}
+	exports.randomColor = randomColor;
+
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	"use strict";
+	Object.defineProperty(exports, "__esModule", { value: true });
+	exports.default = {
+	    CELL_WIDTH: 30,
+	    COLS_COUNT: 10,
+	    ROWS_COUNT: 20,
+	    LevelsStepInterval: [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30],
+	    Colors: ['#fff', '#FF0033', '#FF9900', '#FFFF00', '#99CC00', '#66CCCC', '#0099CC', '#9966CC']
+	};
+
+
+/***/ },
+/* 11 */
+/***/ function(module, exports, __webpack_require__) {
+
 	/// <reference path="../../../typings/index.d.ts" />
 	"use strict";
 	var __extends = (this && this.__extends) || function (d, b) {
@@ -17518,7 +17619,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var BlockBoard_1 = __webpack_require__(10);
+	var BlockBoard_1 = __webpack_require__(12);
 	var Block_1 = __webpack_require__(7);
 	var HoldBlock = (function (_super) {
 	    __extends(HoldBlock, _super);
@@ -17542,6 +17643,7 @@
 	        }
 	        var holdBlockInfo = this.getBlockInfo();
 	        this._blockBoard.changeBlock(blockInfo.blockType, blockInfo.blockRotation);
+	        this._blockBoard.block.color = blockInfo.color;
 	        this._blockBoard.showBlock();
 	        this._blockInfo = blockInfo;
 	        return holdBlockInfo;
@@ -17578,7 +17680,7 @@
 
 
 /***/ },
-/* 10 */
+/* 12 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/// <reference path="../../../typings/index.d.ts" />
@@ -17589,6 +17691,7 @@
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
 	var Block_1 = __webpack_require__(7);
+	var utils = __webpack_require__(9);
 	var BlockBoard = (function (_super) {
 	    __extends(BlockBoard, _super);
 	    function BlockBoard(blockType, blockRotation, _cellWidth, _colsCount, _rowsCount) {
@@ -17620,7 +17723,9 @@
 	    BlockBoard.prototype.changeRandom = function () {
 	        var randomType = Block_1.default.randomType();
 	        var randomRotation = Block_1.default.randomRotation();
+	        var color = utils.randomColor(true);
 	        this.changeBlock(randomType, randomRotation);
+	        this.block.color = color;
 	    };
 	    BlockBoard.prototype.updateBlockPosition = function () {
 	        var blockInfo = this.block.getRealShapeInfo();
@@ -17644,7 +17749,7 @@
 
 
 /***/ },
-/* 11 */
+/* 13 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/// <reference path="../../../typings/index.d.ts" />
@@ -17654,7 +17759,7 @@
 	    function __() { this.constructor = d; }
 	    d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
 	};
-	var BlockBoard_1 = __webpack_require__(10);
+	var BlockBoard_1 = __webpack_require__(12);
 	var Block_1 = __webpack_require__(7);
 	var _ = __webpack_require__(4);
 	var NextBlocks = (function (_super) {
@@ -17675,13 +17780,14 @@
 	        var _this = this;
 	        var nextBlocksInfo = this.getNextBlocksInfo();
 	        var nextBlockInfo = _.first(nextBlocksInfo);
-	        _.forEach(this._blockBoards, function (BlockBoard, i) {
+	        _.forEach(this._blockBoards, function (blockBoard, i) {
 	            if (i < _this.blockCount - 1) {
 	                var nextInfo = nextBlocksInfo[i + 1];
-	                BlockBoard.changeBlock(nextInfo.blockType, nextInfo.blockRotation);
+	                blockBoard.changeBlock(nextInfo.blockType, nextInfo.blockRotation);
+	                blockBoard.block.color = nextInfo.color;
 	            }
 	            else {
-	                BlockBoard.changeRandom();
+	                blockBoard.changeRandom();
 	            }
 	        });
 	        return nextBlockInfo;
@@ -17691,7 +17797,8 @@
 	        _.forEach(this._blockBoards, function (blockBoard) {
 	            ret.push({
 	                blockType: blockBoard.block.blockType,
-	                blockRotation: blockBoard.block.blockRotation
+	                blockRotation: blockBoard.block.blockRotation,
+	                color: blockBoard.block.color
 	            });
 	        });
 	        return ret;
@@ -17745,7 +17852,7 @@
 
 
 /***/ },
-/* 12 */
+/* 14 */
 /***/ function(module, exports) {
 
 	/// <reference path="../../../typings/index.d.ts" />
@@ -17831,7 +17938,7 @@
 
 
 /***/ },
-/* 13 */
+/* 15 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/// <reference path="../../../typings/index.d.ts" />
@@ -17957,7 +18064,7 @@
 
 
 /***/ },
-/* 14 */
+/* 16 */
 /***/ function(module, exports) {
 
 	"use strict";
@@ -18050,21 +18157,6 @@
 	}(createjs.Container));
 	Object.defineProperty(exports, "__esModule", { value: true });
 	exports.default = Firefly;
-
-
-/***/ },
-/* 15 */
-/***/ function(module, exports) {
-
-	"use strict";
-	Object.defineProperty(exports, "__esModule", { value: true });
-	exports.default = {
-	    CELL_WIDTH: 30,
-	    COLS_COUNT: 10,
-	    ROWS_COUNT: 20,
-	    LevelsStepInterval: [1800, 1500, 1200, 1000, 800, 700, 600, 500, 400, 300, 200, 150, 100, 70, 50, 30],
-	    Colors: ['#fff', '#FF0033', '#FF9900', '#FFFF00', '#99CC00', '#66CCCC', '#0099CC', '#9966CC']
-	};
 
 
 /***/ }

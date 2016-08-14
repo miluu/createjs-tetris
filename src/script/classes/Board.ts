@@ -3,6 +3,7 @@
 import * as _ from 'lodash';
 import Cell from './Cell';
 import Block, {IBlockInfo} from './Block';
+import * as utils from '../utils';
 
 interface IMapPosition {
   row: number;
@@ -13,7 +14,7 @@ type TMoveDirection = 'left' | 'right' | 'down';
 export default class Board extends createjs.Container {
   public activeBlock: Block;
   private _bg: createjs.Shape;
-  private _map: number[][];
+  private _map: (number | string)[][];
   private _cells: Cell[][];
   private _activeBlockPosition: IMapPosition;
   constructor(
@@ -28,6 +29,7 @@ export default class Board extends createjs.Container {
   public resetActiveBlock(blockInfo: IBlockInfo) {
     this.activeBlock.blockRotation = blockInfo.blockRotation;
     this.activeBlock.blockType = blockInfo.blockType;
+    this.activeBlock.color = blockInfo.color;
     this.resetActiveBlockPos();
     this.showActiveBlock();
   }
@@ -52,14 +54,8 @@ export default class Board extends createjs.Container {
     return this._cellWidth * this._rowsCount;
   }
 
-  public setMap(position: IMapPosition, val: number) {
+  public setMap(position: IMapPosition, val: number | string) {
     const {row, col} = position;
-    if (val !== 0 && val !== 1) {
-      throw new Error('val can only be 0 or 1.');
-    }
-    if (row > this._rowsCount - 1 || row < 0 || col > this._colsCount || col < 0) {
-      throw new Error(`Out of map's range.`);
-    }
     this._map[row][col] = val;
     this._updateMapView();
   }
@@ -103,7 +99,7 @@ export default class Board extends createjs.Container {
     const blockCellsMapPosition = this._activeBlockToMapPostion(blockPosition);
     _.forEach(blockCellsMapPosition, (pos) => {
       if (this.isInRange(pos)) {
-        this.setMap(pos, 1);
+        this.setMap(pos, blockInfo.color || 1);
       } else {
         outRangeCellPos.push(pos);
       }
@@ -155,6 +151,7 @@ export default class Board extends createjs.Container {
     this._updateMapView();
     this.activeBlock.blockType = Block.randomType();
     this.activeBlock.blockRotation = Block.randomRotation();
+    this.activeBlock.color = utils.randomColor(true);
     this._initActiveBlockPosition();
     this._updateActiveBlockPosition();
   }
@@ -174,10 +171,10 @@ export default class Board extends createjs.Container {
     return {x, y};
   }
 
-  get map(): number[][] {
+  get map(): (number | string)[][] {
     return this._map;
   }
-  set map(map: number[][]) {
+  set map(map: (number | string)[][]) {
     this._map = map;
     this._updateMapView();
   }
@@ -264,9 +261,17 @@ export default class Board extends createjs.Container {
     _.forEach(this._map, (mapRow, row) => {
       _.forEach(mapRow, (cellState, col) => {
         const cell = this._cells[row][col];
-        cell.alpha = cellState === 0
-          ? 0.1
-          : 1;
+        if (!cellState) {
+          cell.alpha = 0.05;
+          cell.color = null;
+        } else {
+          cell.alpha = 1;
+          if (typeof cellState === 'string') {
+            cell.color = cellState;
+          } else {
+            cell.color = null;
+          }
+        }
       });
     });
   }
@@ -325,7 +330,7 @@ export default class Board extends createjs.Container {
     const blockMapPosition = this._activeBlockToMapPostion(position, this.activeBlock.getRotationShape(blockRotation));
     _.forEach(blockMapPosition, (mapPos) => {
       const {col, row} = mapPos;
-      if (_.get(this.map, `[${row}][${col}]`) === 1 || col < 0 || col > this._colsCount - 1 || row > this._rowsCount - 1) {
+      if (_.get(this.map, `[${row}][${col}]`) || col < 0 || col > this._colsCount - 1 || row > this._rowsCount - 1) {
         canMove = false;
         return false;
       }
@@ -339,7 +344,7 @@ export default class Board extends createjs.Container {
       if (row < fromRow) {
         return;
       }
-      if (colCells[col] === 1) {
+      if (colCells[col]) {
         ret.row = row - 1;
         return false;
       }

@@ -9,6 +9,7 @@ import KeyController from './KeyController';
 import Star from './Star';
 import Firefly from './Firefly';
 import * as _ from 'lodash';
+import * as utils from '../utils';
 import config from '../config';
 
 interface IGameOptions {
@@ -358,7 +359,7 @@ export default class Game extends createjs.Container {
       const {cellWidth} = this._options;
       const shapeType = Math.floor(Math.random() * 4);
       const shapeWidth = Math.random() * cellWidth * 0.1 + cellWidth * 0.2;
-      const firefly = new Firefly(shapeType, shapeWidth, randomColor());
+      const firefly = new Firefly(shapeType, shapeWidth, utils.randomColor());
       firefly.x = Math.round(Math.random() * width) + x;
       firefly.y = Math.round(Math.random() * height) + y;
       this.addChild(firefly);
@@ -374,7 +375,7 @@ export default class Game extends createjs.Container {
       const {cellWidth} = this._options;
       const shapeType = Math.floor(Math.random() * 4);
       const shapeWidth = Math.random() * cellWidth * 0.1 + cellWidth * 0.2;
-      const firefly = new Firefly(shapeType, shapeWidth, randomColor());
+      const firefly = new Firefly(shapeType, shapeWidth, utils.randomColor());
       firefly.x = x + this._board.x;
       firefly.y = y + this._board.y;
       this.addChild(firefly);
@@ -386,11 +387,4 @@ export default class Game extends createjs.Container {
   private _clearHoldBlock() {
     this._holdBlock.clear();
   }
-}
-
-function randomColor() {
-  const {Colors} = config;
-  const len = Colors.length;
-  const r = Math.floor(Math.random() * len);
-  return Colors[r] || '#fff';
 }

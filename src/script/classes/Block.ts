@@ -11,12 +11,14 @@ export interface IBlockCell {
 export interface IBlockInfo {
   blockType: string;
   blockRotation: number;
+  color: string;
 }
 
 export default class Block extends createjs.Container {
   private _blockRotation: number;
   private _blockType: string;
   public cells: Cell[];
+  private _color: string;
 
   constructor(
     private _cellWidth: number = 30,
@@ -33,6 +35,7 @@ export default class Block extends createjs.Container {
       blockRotation = Block.randomRotation();
     }
     this.blockRotation = blockRotation;
+    this._color = null;
   }
 
   public acitve() {
@@ -65,6 +68,7 @@ export default class Block extends createjs.Container {
     return {
       blockType: this.blockType,
       blockRotation: this.blockRotation,
+      color: this.color
     };
   }
 
@@ -93,6 +97,16 @@ export default class Block extends createjs.Container {
     blockRotation = Math.floor(Math.abs(blockRotation)) % 4;
     this._blockRotation = blockRotation;
     this._update();
+  }
+
+  get color(): string {
+    return this._color;
+  }
+  set color(color: string) {
+    this._color = color || null;
+    _.forEach(this.cells, (cell) => {
+      cell.color = this._color;
+    });
   }
 
   private _buildCells(): void {

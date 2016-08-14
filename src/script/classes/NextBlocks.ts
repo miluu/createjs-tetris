@@ -20,12 +20,13 @@ export default class NextBlocks extends createjs.Container {
   next(): IBlockInfo {
     const nextBlocksInfo = this.getNextBlocksInfo();
     const nextBlockInfo = _.first(nextBlocksInfo);
-    _.forEach(this._blockBoards, (BlockBoard, i) => {
+    _.forEach(this._blockBoards, (blockBoard, i) => {
       if (i < this.blockCount - 1) {
         const nextInfo = nextBlocksInfo[i + 1];
-        BlockBoard.changeBlock(nextInfo.blockType, nextInfo.blockRotation);
+        blockBoard.changeBlock(nextInfo.blockType, nextInfo.blockRotation);
+        blockBoard.block.color = nextInfo.color;
       } else {
-        BlockBoard.changeRandom();
+        blockBoard.changeRandom();
       }
     });
     return nextBlockInfo;
@@ -36,7 +37,8 @@ export default class NextBlocks extends createjs.Container {
     _.forEach(this._blockBoards, (blockBoard) => {
       ret.push({
         blockType: blockBoard.block.blockType,
-        blockRotation: blockBoard.block.blockRotation
+        blockRotation: blockBoard.block.blockRotation,
+        color: blockBoard.block.color
       });
     });
     return ret;

@@ -28,6 +28,7 @@ export default class HoldBlock extends createjs.Container {
     }
     const holdBlockInfo = this.getBlockInfo();
     this._blockBoard.changeBlock(blockInfo.blockType, blockInfo.blockRotation);
+    this._blockBoard.block.color = blockInfo.color;
     this._blockBoard.showBlock();
     this._blockInfo = blockInfo;
     return holdBlockInfo;
