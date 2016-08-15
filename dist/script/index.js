@@ -332,7 +332,8 @@
 	            this._blockBoom();
 	        }
 	        this._board.activeBlock.static();
-	        this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), true);
+	        var clearTime = 300 + 50 * config_1.default.COLS_COUNT;
+	        this.wait(this.msToFrames(ms + (hasClearLines ? clearTime : 0)), true);
 	        this.wait(this.msToFrames(ms), false, function () {
 	            _this._board.resetActiveBlock(_this._nextBlocks.next());
 	            _this._board.resetActiveBlockPos();
@@ -341,6 +342,7 @@
 	            _this._record.blockCount++;
 	            _this._record.blockCountByTypes[blockInfo.blockType]++;
 	            if (rows.length) {
+	                _this._rowsBoom(rows, 50);
 	                _this._record.clearLines += rows.length;
 	                _this._record.clearCountByLines[rows.length - 1]++;
 	                _this._record.score += _this._clearRowsScore[rows.length - 1];
@@ -352,7 +354,7 @@
 	            }
 	        });
 	        if (hasClearLines) {
-	            this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), false, function () {
+	            this.wait(this.msToFrames(clearTime), false, function () {
 	                _this._board.clearRow(rows);
 	            });
 	        }
@@ -418,9 +420,12 @@
 	        });
 	    };
 	    Game.prototype._blockBoom = function () {
-	        var _this = this;
 	        var _a = this._board.getActiveBlockCenterPos(), x = _a.x, y = _a.y;
 	        var count = 15;
+	        this._boom(x, y, count, 300);
+	    };
+	    Game.prototype._boom = function (x, y, count, ms) {
+	        var _this = this;
 	        _.times(count, function (i) {
 	            var cellWidth = _this._options.cellWidth;
 	            var shapeType = Math.floor(Math.random() * 4);
@@ -429,8 +434,19 @@
 	            firefly.x = x + _this._board.x;
 	            firefly.y = y + _this._board.y;
 	            _this.addChild(firefly);
-	            firefly.boom(360 / count * i, 300, _this._options.cellWidth * 2, function () {
+	            firefly.boom(360 / count * i, ms, _this._options.cellWidth * 2, function () {
 	                _this.removeChild(firefly);
+	            });
+	        });
+	    };
+	    Game.prototype._rowsBoom = function (rows, interval) {
+	        var _this = this;
+	        _.forEach(rows, function (row) {
+	            var randomCols = utils.randomIndex(config_1.default.COLS_COUNT);
+	            _.forEach(randomCols, function (col, i) {
+	                _this.wait(_this.msToFrames(i * interval), false, function () {
+	                    _this._boom((col + 0.5) * config_1.default.CELL_WIDTH + _this.x, (row + 0.5) * config_1.default.CELL_WIDTH + _this.y, 15, 300);
+	                });
 	            });
 	        });
 	    };
@@ -17579,6 +17595,7 @@
 
 	"use strict";
 	var config_1 = __webpack_require__(10);
+	var _ = __webpack_require__(4);
 	var Colors = config_1.default.Colors;
 	function randomColor(withoutFirst) {
 	    if (withoutFirst === void 0) { withoutFirst = false; }
@@ -17591,6 +17608,21 @@
 	    return c[r];
 	}
 	exports.randomColor = randomColor;
+	function randomIndex(len) {
+	    var indexArr = [];
+	    var retArr = [];
+	    var r;
+	    _.times(len, function (i) {
+	        indexArr.push(i);
+	    });
+	    _.times(len, function (i) {
+	        r = _.random(len - 1 - i);
+	        retArr.push(indexArr[r]);
+	        _.pullAt(indexArr, r);
+	    });
+	    return retArr;
+	}
+	exports.randomIndex = randomIndex;
 
 
 /***/ },

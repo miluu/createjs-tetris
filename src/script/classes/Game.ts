@@ -287,7 +287,8 @@ export default class Game extends createjs.Container {
       this._blockBoom();
     }
     this._board.activeBlock.static();
-    this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), true);
+    const clearTime = 300 + 50 * config.COLS_COUNT;
+    this.wait(this.msToFrames(ms + (hasClearLines ? clearTime : 0)), true);
     this.wait(this.msToFrames(ms), false, () => {
       this._board.resetActiveBlock(this._nextBlocks.next());
       this._board.resetActiveBlockPos();
@@ -296,6 +297,7 @@ export default class Game extends createjs.Container {
       this._record.blockCount++;
       this._record.blockCountByTypes[blockInfo.blockType]++;
       if (rows.length) {
+        this._rowsBoom(rows, 50);
         this._record.clearLines += rows.length;
         this._record.clearCountByLines[rows.length - 1]++;
         this._record.score += this._clearRowsScore[rows.length - 1];
@@ -307,7 +309,7 @@ export default class Game extends createjs.Container {
       }
     });
     if (hasClearLines) {
-      this.wait(this.msToFrames(ms * (hasClearLines ? 2 : 1)), false, () => {
+      this.wait(this.msToFrames(clearTime), false, () => {
         this._board.clearRow(rows);
       });
     }
@@ -371,6 +373,9 @@ export default class Game extends createjs.Container {
   private _blockBoom() {
     const {x, y} = this._board.getActiveBlockCenterPos();
     const count = 15;
+    this._boom(x, y, count, 300);
+  }
+  private _boom(x: number, y: number, count: number, ms: number) {
     _.times(count, (i) => {
       const {cellWidth} = this._options;
       const shapeType = Math.floor(Math.random() * 4);
@@ -379,8 +384,18 @@ export default class Game extends createjs.Container {
       firefly.x = x + this._board.x;
       firefly.y = y + this._board.y;
       this.addChild(firefly);
-      firefly.boom(360 / count * i, 300, this._options.cellWidth * 2, () => {
+      firefly.boom(360 / count * i, ms, this._options.cellWidth * 2, () => {
         this.removeChild(firefly);
+      });
+    });
+  }
+  private _rowsBoom(rows: number[], interval: number) {
+    _.forEach(rows, (row) => {
+      const randomCols = utils.randomIndex(config.COLS_COUNT);
+      _.forEach(randomCols, (col, i) => {
+        this.wait(this.msToFrames(i * interval), false, () => {
+          this._boom((col + 0.5) * config.CELL_WIDTH + this.x, (row + 0.5) * config.CELL_WIDTH + this.y, 15, 300);
+        });
       });
     });
   }
