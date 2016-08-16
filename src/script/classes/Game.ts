@@ -392,9 +392,13 @@ export default class Game extends createjs.Container {
   private _rowsBoom(rows: number[], interval: number) {
     _.forEach(rows, (row) => {
       const randomCols = utils.randomIndex(config.COLS_COUNT);
+      const len = randomCols.length;
       _.forEach(randomCols, (col, i) => {
+        if (i > (len + 1) / 2) {
+          return false;
+        }
         this.wait(this.msToFrames(i * interval), false, () => {
-          this._boom((col + 0.5) * config.CELL_WIDTH + this.x, (row + 0.5) * config.CELL_WIDTH + this.y, 15, 300);
+          this._boom((col + 0.5) * config.CELL_WIDTH + this.x, (row + 0.5) * config.CELL_WIDTH + this.y, 10, 300);
         });
       });
     });

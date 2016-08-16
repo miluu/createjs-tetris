@@ -443,9 +443,13 @@
 	        var _this = this;
 	        _.forEach(rows, function (row) {
 	            var randomCols = utils.randomIndex(config_1.default.COLS_COUNT);
+	            var len = randomCols.length;
 	            _.forEach(randomCols, function (col, i) {
+	                if (i > (len + 1) / 2) {
+	                    return false;
+	                }
 	                _this.wait(_this.msToFrames(i * interval), false, function () {
-	                    _this._boom((col + 0.5) * config_1.default.CELL_WIDTH + _this.x, (row + 0.5) * config_1.default.CELL_WIDTH + _this.y, 15, 300);
+	                    _this._boom((col + 0.5) * config_1.default.CELL_WIDTH + _this.x, (row + 0.5) * config_1.default.CELL_WIDTH + _this.y, 10, 300);
 	                });
 	            });
 	        });
@@ -718,11 +722,11 @@
 	            _.forEach(mapRow, function (cellState, col) {
 	                var cell = _this._cells[row][col];
 	                if (!cellState) {
-	                    cell.alpha = 0.05;
+	                    cell.visible = false;
 	                    cell.color = null;
 	                }
 	                else {
-	                    cell.alpha = 1;
+	                    cell.visible = true;
 	                    if (typeof cellState === 'string') {
 	                        cell.color = cellState;
 	                    }

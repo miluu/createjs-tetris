@@ -262,10 +262,10 @@ export default class Board extends createjs.Container {
       _.forEach(mapRow, (cellState, col) => {
         const cell = this._cells[row][col];
         if (!cellState) {
-          cell.alpha = 0.05;
+          cell.visible = false;
           cell.color = null;
         } else {
-          cell.alpha = 1;
+          cell.visible = true;
           if (typeof cellState === 'string') {
             cell.color = cellState;
           } else {
