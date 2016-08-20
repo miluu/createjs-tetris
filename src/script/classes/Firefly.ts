@@ -3,8 +3,11 @@ import * as _ from 'lodash';
 
 export default class Firefly extends createjs.Container {
   public shape: createjs.Shape;
+  public shapeShadow: createjs.Shape;
+  public shapeGroup: createjs.Container;
   constructor(public shapeType: number = 0, public shapeWidth: number = 8, public color: string = '#fff') {
     super();
+    this.shapeGroup = new createjs.Container();
     this.shape = new createjs.Shape();
     const g = this.shape.graphics;
     g.beginStroke(color);
@@ -24,7 +27,12 @@ export default class Firefly extends createjs.Container {
       default: // 圆形
         g.drawCircle(0, 0, shapeWidth / 2);
     }
-    this.addChild(this.shape);
+    this.shapeShadow = this.shape.clone();
+    this.shapeShadow.compositeOperation = 'lighter';
+    this.shapeShadow.shadow = new createjs.Shadow(color, 0, 0, 5);
+    this.shapeGroup.addChild(this.shapeShadow);
+    this.shapeGroup.addChild(this.shape);
+    this.addChild(this.shapeGroup);
     this.rotation = Math.random() * 360;
   }
   public animate(ms: number, callback?: () => any) {
@@ -47,19 +55,13 @@ export default class Firefly extends createjs.Container {
   }
   public boom(rotation: number = 0, ms: number, distance: number, callback?: () => any) {
     this.rotation = rotation;
-    // const rotation1 = rotation + 360;
-    const {x, y} = this.shape;
-    const shapeRotation = this.shape.rotation;
-    const shapeRotation1 = this.shape.rotation + 3 * 360;
+    const {x, y} = this.shapeGroup;
+    const shapeRotation = this.shapeGroup.rotation;
+    const shapeRotation1 = this.shapeGroup.rotation + 3 * 360;
     const x1 = x + distance;
     this.shape.alpha = 0;
-    // createjs.Tween
-    //   .get(this)
-    //   .to({
-    //     rotation: rotation1
-    //   }, ms * 2, createjs.Ease.circOut);
     createjs.Tween
-      .get(this.shape)
+      .get(this.shapeGroup)
       .to({
         x: x1,
         alpha: 1,

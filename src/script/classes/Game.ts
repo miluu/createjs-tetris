@@ -6,7 +6,6 @@ import HoldBlock from './HoldBlock';
 import NextBlocks from './NextBlocks';
 import Infos from './Infos';
 import KeyController from './KeyController';
-import Star from './Star';
 import Firefly from './Firefly';
 import * as _ from 'lodash';
 import * as utils from '../utils';
