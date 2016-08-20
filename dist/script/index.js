@@ -18119,7 +18119,6 @@
 	        this.shapeType = shapeType;
 	        this.shapeWidth = shapeWidth;
 	        this.color = color;
-	        this.shapeGroup = new createjs.Container();
 	        this.shape = new createjs.Shape();
 	        var g = this.shape.graphics;
 	        g.beginStroke(color);
@@ -18139,12 +18138,8 @@
 	            default:
 	                g.drawCircle(0, 0, shapeWidth / 2);
 	        }
-	        this.shapeShadow = this.shape.clone();
-	        this.shapeShadow.compositeOperation = 'lighter';
-	        this.shapeShadow.shadow = new createjs.Shadow(color, 0, 0, 5);
-	        this.shapeGroup.addChild(this.shapeShadow);
-	        this.shapeGroup.addChild(this.shape);
-	        this.addChild(this.shapeGroup);
+	        // this.shape.shadow = new createjs.Shadow(color, 0, 0, 5);
+	        this.addChild(this.shape);
 	        this.rotation = Math.random() * 360;
 	    }
 	    Firefly.prototype.animate = function (ms, callback) {
@@ -18168,13 +18163,13 @@
 	    Firefly.prototype.boom = function (rotation, ms, distance, callback) {
 	        if (rotation === void 0) { rotation = 0; }
 	        this.rotation = rotation;
-	        var _a = this.shapeGroup, x = _a.x, y = _a.y;
-	        var shapeRotation = this.shapeGroup.rotation;
-	        var shapeRotation1 = this.shapeGroup.rotation + 3 * 360;
+	        var _a = this.shape, x = _a.x, y = _a.y;
+	        var shapeRotation = this.shape.rotation;
+	        var shapeRotation1 = this.shape.rotation + 3 * 360;
 	        var x1 = x + distance;
 	        this.shape.alpha = 0;
 	        createjs.Tween
-	            .get(this.shapeGroup)
+	            .get(this.shape)
 	            .to({
 	            x: x1,
 	            alpha: 1,
